@@ -500,8 +500,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_delivery_order_item: {
+        Args: {
+          p_delivery_order_id: string
+          p_product_id: string
+          p_quantity_sent: number
+          p_unit_price?: number
+        }
+        Returns: string
+      }
       complete_delivery_order: {
         Args: { p_delivery_order_id: string }
+        Returns: undefined
+      }
+      edit_delivery_order_item: {
+        Args: {
+          p_item_id: string
+          p_product_id: string
+          p_quantity_sent: number
+          p_unit_price?: number
+        }
+        Returns: undefined
+      }
+      remove_delivery_order_item: {
+        Args: { p_item_id: string }
         Returns: undefined
       }
       get_my_role: {
