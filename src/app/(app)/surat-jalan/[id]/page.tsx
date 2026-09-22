@@ -53,13 +53,13 @@ export default async function DeliveryOrderDetailPage({
         />
       </div>
 
-      <div className="print-area rounded-lg border border-neutral-200 bg-white p-8">
-        <div className="border-b-2 border-neutral-900 pb-3 text-center">
-          <h2 className="text-xl font-bold">SURAT JALAN</h2>
+      <div className="print-area rounded-lg border border-neutral-200 bg-white p-6">
+        <div className="border-b border-neutral-900 pb-2 text-center">
+          <h2 className="text-lg font-bold">SURAT JALAN</h2>
           <p className="text-sm">{order.code}</p>
         </div>
 
-        <div className="mt-4 flex justify-between text-sm">
+        <div className="mt-3 flex justify-between text-sm">
           <div>
             <p className="font-medium">Kepada:</p>
             <p>{order.companies?.name}</p>
@@ -74,38 +74,37 @@ export default async function DeliveryOrderDetailPage({
           </div>
         </div>
 
-        <table className="mt-6 w-full border-collapse text-sm">
+        <table className="mt-4 w-full text-sm">
           <thead>
-            <tr className="border border-neutral-900 bg-neutral-100">
-              <th className="border border-neutral-900 px-2 py-1 text-left">Barang</th>
-              <th className="border border-neutral-900 px-2 py-1 text-right">Jumlah Kirim</th>
-              <th className="border border-neutral-900 px-2 py-1 text-right">Jumlah Retur</th>
+            <tr className="border-y border-neutral-900">
+              <th className="py-1 text-left font-medium">Barang</th>
+              <th className="py-1 text-right font-medium">Jumlah Kirim</th>
+              <th className="py-1 text-right font-medium">Jumlah Retur</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.id}>
-                <td className="border border-neutral-900 px-2 py-1">{r.products?.name}</td>
-                <td className="border border-neutral-900 px-2 py-1 text-right">
+                <td className="py-1">{r.products?.name}</td>
+                <td className="py-1 text-right">
                   {r.quantity_sent} {r.products?.units?.name}
                 </td>
-                <td className="border border-neutral-900 px-2 py-1 text-right">
-                  {r.quantity_returned || "-"}
-                </td>
+                <td className="py-1 text-right">{r.quantity_returned || "-"}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        <div className="border-t border-neutral-900" />
 
-        <div className="mt-16 flex justify-between text-center text-sm">
+        <div className="mt-10 flex justify-between text-center text-sm">
           <div className="w-1/3">
             <p>Pengirim</p>
-            <div className="h-16" />
+            <div className="h-10" />
             <p className="border-t border-neutral-900 pt-1">( {order.driver_name ?? "........."} )</p>
           </div>
           <div className="w-1/3">
             <p>Penerima</p>
-            <div className="h-16" />
+            <div className="h-10" />
             <p className="border-t border-neutral-900 pt-1">( ......................... )</p>
           </div>
         </div>
