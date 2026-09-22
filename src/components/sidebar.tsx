@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { href: "/stok", label: "Stok" },
   { href: "/produksi", label: "Produksi" },
   { href: "/surat-jalan", label: "Surat Jalan" },
+  { href: "/laporan", label: "Laporan" },
   { href: "/master-data", label: "Master Data" },
 ];
 
