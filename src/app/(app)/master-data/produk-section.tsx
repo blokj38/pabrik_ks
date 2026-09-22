@@ -1,13 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
 import { deleteProduct } from "./actions";
 import { CreateProductForm } from "./create-product-form";
+import { EditProductModal } from "./edit-product-modal";
 
 export async function ProdukSection() {
   const supabase = await createClient();
   const [productsRes, unitsRes] = await Promise.all([
     supabase
       .from("products")
-      .select("id, name, category, business_model, current_stock, min_stock, units(name)")
+      .select(
+        "id, name, category, business_model, current_stock, min_stock, unit_id, price_retail, price_wholesale, units(name)"
+      )
       .order("name"),
     supabase.from("units").select("id, name").order("name"),
   ]);
@@ -45,9 +48,24 @@ export async function ProdukSection() {
                   {p.current_stock} {p.units?.name}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <form action={deleteProduct.bind(null, p.id)}>
-                    <button className="text-xs text-red-600 hover:underline">Hapus</button>
-                  </form>
+                  <div className="flex items-center justify-end gap-3">
+                    <EditProductModal
+                      product={{
+                        id: p.id,
+                        name: p.name,
+                        category: p.category,
+                        business_model: p.business_model,
+                        unit_id: p.unit_id,
+                        min_stock: p.min_stock,
+                        price_retail: p.price_retail,
+                        price_wholesale: p.price_wholesale,
+                      }}
+                      units={units}
+                    />
+                    <form action={deleteProduct.bind(null, p.id)}>
+                      <button className="text-xs text-red-600 hover:underline">Hapus</button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             ))}

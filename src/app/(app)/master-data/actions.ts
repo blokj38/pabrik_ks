@@ -90,6 +90,45 @@ export async function deleteProduct(id: string) {
   revalidatePath("/stok");
 }
 
+export type ProductFormState = { error: string | null; success?: boolean };
+
+export async function updateProduct(
+  _prev: ProductFormState,
+  formData: FormData
+): Promise<ProductFormState> {
+  const supabase = await createClient();
+  const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const category = String(formData.get("category") ?? "");
+  const businessModel = String(formData.get("business_model") ?? "");
+  const unitId = String(formData.get("unit_id") ?? "");
+  const minStock = Number(formData.get("min_stock") ?? 0);
+  const priceRetailRaw = String(formData.get("price_retail") ?? "");
+  const priceWholesaleRaw = String(formData.get("price_wholesale") ?? "");
+
+  if (!id || !name || !category || !businessModel || !unitId) {
+    return { error: "Nama, kategori, model bisnis, dan satuan wajib diisi." };
+  }
+
+  const { error } = await supabase
+    .from("products")
+    .update({
+      name,
+      category: category as "bahan_baku" | "barang_jadi",
+      business_model: businessModel as "manufaktur" | "trading",
+      unit_id: unitId,
+      min_stock: minStock || 0,
+      price_retail: priceRetailRaw ? Number(priceRetailRaw) : null,
+      price_wholesale: priceWholesaleRaw ? Number(priceWholesaleRaw) : null,
+    })
+    .eq("id", id);
+  if (error) return { error: error.message };
+
+  revalidatePath("/master-data");
+  revalidatePath("/stok");
+  return { error: null, success: true };
+}
+
 export async function createRecipe(_prev: FormState, formData: FormData): Promise<FormState> {
   const supabase = await createClient();
   const name = String(formData.get("name") ?? "").trim();
