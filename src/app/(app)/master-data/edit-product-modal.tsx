@@ -4,12 +4,14 @@ import { useActionState, useEffect, useState } from "react";
 import { updateProduct, type ProductFormState } from "./actions";
 
 type Unit = { id: string; name: string };
+type BusinessUnit = { id: string; name: string };
 type Product = {
   id: string;
   name: string;
   category: string;
   business_model: string;
   unit_id: string;
+  business_unit_id: string | null;
   min_stock: number;
   price_retail: number | null;
   price_wholesale: number | null;
@@ -17,7 +19,15 @@ type Product = {
 
 const initialState: ProductFormState = { error: null };
 
-export function EditProductModal({ product, units }: { product: Product; units: Unit[] }) {
+export function EditProductModal({
+  product,
+  units,
+  businessUnits,
+}: {
+  product: Product;
+  units: Unit[];
+  businessUnits: BusinessUnit[];
+}) {
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(updateProduct, initialState);
 
@@ -109,6 +119,24 @@ export function EditProductModal({ product, units }: { product: Product; units: 
                     className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-700">
+                  Unit Usaha (kop surat jalan)
+                </label>
+                <select
+                  name="business_unit_id"
+                  defaultValue={product.business_unit_id ?? ""}
+                  className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                >
+                  <option value="">- Tidak ditentukan -</option>
+                  {businessUnits.map((bu) => (
+                    <option key={bu.id} value={bu.id}>
+                      {bu.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

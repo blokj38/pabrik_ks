@@ -5,25 +5,27 @@ import { EditProductModal } from "./edit-product-modal";
 
 export async function ProdukSection() {
   const supabase = await createClient();
-  const [productsRes, unitsRes] = await Promise.all([
+  const [productsRes, unitsRes, businessUnitsRes] = await Promise.all([
     supabase
       .from("products")
       .select(
-        "id, name, category, business_model, current_stock, min_stock, unit_id, price_retail, price_wholesale, units(name)"
+        "id, name, category, business_model, current_stock, min_stock, unit_id, business_unit_id, price_retail, price_wholesale, units(name), business_units(name)"
       )
       .order("name"),
     supabase.from("units").select("id, name").order("name"),
+    supabase.from("business_units").select("id, name").order("name"),
   ]);
 
   const products = productsRes.data ?? [];
   const units = unitsRes.data ?? [];
+  const businessUnits = businessUnitsRes.data ?? [];
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="rounded-lg border border-neutral-200 bg-white p-4 lg:col-span-1">
         <h2 className="text-sm font-semibold text-neutral-900">Tambah Produk</h2>
         <div className="mt-3">
-          <CreateProductForm units={units} />
+          <CreateProductForm units={units} businessUnits={businessUnits} />
         </div>
       </div>
 
@@ -33,6 +35,7 @@ export async function ProdukSection() {
             <tr>
               <th className="px-4 py-3">Nama</th>
               <th className="px-4 py-3">Kategori</th>
+              <th className="px-4 py-3">Unit Usaha</th>
               <th className="px-4 py-3 text-right">Stok</th>
               <th className="px-4 py-3" />
             </tr>
@@ -44,6 +47,7 @@ export async function ProdukSection() {
                 <td className="px-4 py-3 text-neutral-600">
                   {p.category === "bahan_baku" ? "Bahan Baku" : "Barang Jadi"}
                 </td>
+                <td className="px-4 py-3 text-neutral-600">{p.business_units?.name ?? "-"}</td>
                 <td className="px-4 py-3 text-right text-neutral-600">
                   {p.current_stock} {p.units?.name}
                 </td>
@@ -56,11 +60,13 @@ export async function ProdukSection() {
                         category: p.category,
                         business_model: p.business_model,
                         unit_id: p.unit_id,
+                        business_unit_id: p.business_unit_id,
                         min_stock: p.min_stock,
                         price_retail: p.price_retail,
                         price_wholesale: p.price_wholesale,
                       }}
                       units={units}
+                      businessUnits={businessUnits}
                     />
                     <form action={deleteProduct.bind(null, p.id)}>
                       <button className="text-xs text-red-600 hover:underline">Hapus</button>
@@ -71,7 +77,7 @@ export async function ProdukSection() {
             ))}
             {products.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-neutral-500">
+                <td colSpan={5} className="px-4 py-8 text-center text-neutral-500">
                   Belum ada produk.
                 </td>
               </tr>

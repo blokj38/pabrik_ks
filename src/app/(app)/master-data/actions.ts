@@ -59,6 +59,7 @@ export async function createProduct(_prev: FormState, formData: FormData): Promi
   const category = String(formData.get("category") ?? "");
   const businessModel = String(formData.get("business_model") ?? "");
   const unitId = String(formData.get("unit_id") ?? "");
+  const businessUnitId = String(formData.get("business_unit_id") ?? "") || null;
   const minStock = Number(formData.get("min_stock") ?? 0);
   const priceRetailRaw = String(formData.get("price_retail") ?? "");
   const priceWholesaleRaw = String(formData.get("price_wholesale") ?? "");
@@ -72,6 +73,7 @@ export async function createProduct(_prev: FormState, formData: FormData): Promi
     category: category as "bahan_baku" | "barang_jadi",
     business_model: businessModel as "manufaktur" | "trading",
     unit_id: unitId,
+    business_unit_id: businessUnitId,
     min_stock: minStock || 0,
     price_retail: priceRetailRaw ? Number(priceRetailRaw) : null,
     price_wholesale: priceWholesaleRaw ? Number(priceWholesaleRaw) : null,
@@ -102,6 +104,7 @@ export async function updateProduct(
   const category = String(formData.get("category") ?? "");
   const businessModel = String(formData.get("business_model") ?? "");
   const unitId = String(formData.get("unit_id") ?? "");
+  const businessUnitId = String(formData.get("business_unit_id") ?? "") || null;
   const minStock = Number(formData.get("min_stock") ?? 0);
   const priceRetailRaw = String(formData.get("price_retail") ?? "");
   const priceWholesaleRaw = String(formData.get("price_wholesale") ?? "");
@@ -117,6 +120,7 @@ export async function updateProduct(
       category: category as "bahan_baku" | "barang_jadi",
       business_model: businessModel as "manufaktur" | "trading",
       unit_id: unitId,
+      business_unit_id: businessUnitId,
       min_stock: minStock || 0,
       price_retail: priceRetailRaw ? Number(priceRetailRaw) : null,
       price_wholesale: priceWholesaleRaw ? Number(priceWholesaleRaw) : null,
@@ -176,4 +180,26 @@ export async function deleteRecipe(id: string) {
   await supabase.from("recipes").delete().eq("id", id);
   revalidatePath("/master-data");
   revalidatePath("/produksi");
+}
+
+export async function createBusinessUnit(
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const supabase = await createClient();
+  const name = String(formData.get("name") ?? "").trim();
+  const address = String(formData.get("address") ?? "") || null;
+  if (!name) return { error: "Nama unit usaha wajib diisi." };
+
+  const { error } = await supabase.from("business_units").insert({ name, address });
+  if (error) return { error: error.message };
+
+  revalidatePath("/master-data");
+  return { error: null };
+}
+
+export async function deleteBusinessUnit(id: string) {
+  const supabase = await createClient();
+  await supabase.from("business_units").delete().eq("id", id);
+  revalidatePath("/master-data");
 }

@@ -47,7 +47,7 @@ export function DeliveryOrderActions({
   };
 
   return (
-    <div className="no-print space-y-3">
+    <div className="print:hidden space-y-3">
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
       <div className="flex gap-2">

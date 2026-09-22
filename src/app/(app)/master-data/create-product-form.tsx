@@ -4,10 +4,17 @@ import { useActionState, useEffect, useRef } from "react";
 import { createProduct, type FormState } from "./actions";
 
 type Unit = { id: string; name: string };
+type BusinessUnit = { id: string; name: string };
 
 const initialState: FormState = { error: null };
 
-export function CreateProductForm({ units }: { units: Unit[] }) {
+export function CreateProductForm({
+  units,
+  businessUnits,
+}: {
+  units: Unit[];
+  businessUnits: BusinessUnit[];
+}) {
   const [state, formAction, pending] = useActionState(createProduct, initialState);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -78,6 +85,23 @@ export function CreateProductForm({ units }: { units: Unit[] }) {
             className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
           />
         </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-neutral-700">
+          Unit Usaha (kop surat jalan)
+        </label>
+        <select
+          name="business_unit_id"
+          className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+        >
+          <option value="">- Tidak ditentukan -</option>
+          {businessUnits.map((bu) => (
+            <option key={bu.id} value={bu.id}>
+              {bu.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

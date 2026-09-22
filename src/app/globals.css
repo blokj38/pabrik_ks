@@ -22,17 +22,4 @@ body {
   @page {
     margin: 8mm;
   }
-  .no-print {
-    display: none !important;
-  }
-  .print-area {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-  }
 }

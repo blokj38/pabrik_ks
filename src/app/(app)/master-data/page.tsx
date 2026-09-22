@@ -3,12 +3,14 @@ import { ProdukSection } from "./produk-section";
 import { PerusahaanSection } from "./perusahaan-section";
 import { ResepSection } from "./resep-section";
 import { SatuanSection } from "./satuan-section";
+import { UnitUsahaSection } from "./unit-usaha-section";
 
 const TABS = [
   { key: "produk", label: "Produk" },
   { key: "perusahaan", label: "Perusahaan" },
   { key: "resep", label: "Resep (BOM)" },
   { key: "satuan", label: "Satuan" },
+  { key: "unit-usaha", label: "Unit Usaha" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -50,6 +52,7 @@ export default async function MasterDataPage({
       {activeTab === "perusahaan" ? <PerusahaanSection /> : null}
       {activeTab === "resep" ? <ResepSection /> : null}
       {activeTab === "satuan" ? <SatuanSection /> : null}
+      {activeTab === "unit-usaha" ? <UnitUsahaSection /> : null}
     </div>
   );
 }

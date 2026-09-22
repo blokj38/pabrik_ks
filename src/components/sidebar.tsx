@@ -24,7 +24,7 @@ export function Sidebar({
   role: string;
 }) {
   return (
-    <aside className="no-print flex w-60 shrink-0 flex-col border-r border-neutral-200 bg-white">
+    <aside className="print:hidden flex w-60 shrink-0 flex-col border-r border-neutral-200 bg-white">
       <div className="border-b border-neutral-200 px-5 py-5">
         <p className="text-sm font-semibold text-neutral-900">FIMS</p>
         <p className="text-xs text-neutral-500">Pabrik Kecap, Garam & Kerupuk</p>
