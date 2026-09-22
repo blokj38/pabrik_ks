@@ -70,13 +70,6 @@ export function DeliveryOrderActions({
             Selesaikan Pengiriman
           </button>
         ) : null}
-
-        <button
-          onClick={() => window.print()}
-          className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
-        >
-          Cetak
-        </button>
       </div>
 
       {showComplete ? (

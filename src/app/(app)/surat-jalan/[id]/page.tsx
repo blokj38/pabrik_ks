@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DeliveryOrderActions } from "./delivery-order-actions";
+import { PrintDocuments } from "./print-documents";
 
 const STATUS_LABEL: Record<string, string> = {
   draft: "Draft",
@@ -36,16 +37,28 @@ export default async function DeliveryOrderDetailPage({
 
   const rows = items ?? [];
 
-  type Row = (typeof rows)[number];
-  const groups = new Map<string, { unitName: string; rows: Row[] }>();
+  type PrintRow = {
+    id: string;
+    product_name: string;
+    unit_name: string | null;
+    quantity_sent: number;
+    quantity_returned: number;
+  };
+  const groups = new Map<string, { unitName: string; rows: PrintRow[] }>();
   for (const r of rows) {
     const key = r.products?.business_unit_id ?? "lainnya";
     const unitName = r.products?.business_units?.name ?? "Lainnya";
     const group = groups.get(key) ?? { unitName, rows: [] };
-    group.rows.push(r);
+    group.rows.push({
+      id: r.id,
+      product_name: r.products?.name ?? "-",
+      unit_name: r.products?.units?.name ?? null,
+      quantity_sent: r.quantity_sent,
+      quantity_returned: r.quantity_returned,
+    });
     groups.set(key, group);
   }
-  const groupList = Array.from(groups.values());
+  const groupList = Array.from(groups.entries()).map(([key, g]) => ({ key, ...g }));
 
   const tanggal = new Date(order.created_at).toLocaleDateString("id-ID", {
     day: "numeric",
@@ -72,74 +85,13 @@ export default async function DeliveryOrderDetailPage({
         />
       </div>
 
-      {groupList.map((group, i) => (
-        <div
-          key={group.unitName + i}
-          className={`rounded-lg border border-neutral-200 bg-white p-6 print:rounded-none print:border-0 print:p-0 ${
-            i < groupList.length - 1 ? "print:break-after-page" : ""
-          }`}
-        >
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-neutral-900">{group.unitName}</h2>
-              <p className="mt-2 text-sm">Surat Jalan No: {order.code}</p>
-            </div>
-            <div className="text-right text-sm">
-              <p>
-                Tanggal <span className="ml-4">{tanggal}</span>
-              </p>
-              <p>
-                Tuan <span className="ml-4">{order.companies?.name}</span>
-              </p>
-              <p>
-                Toko{" "}
-                <span className="ml-4">
-                  {order.destination_address || order.companies?.address || "-"}
-                </span>
-              </p>
-            </div>
-          </div>
-
-          <table className="mt-4 w-full border-collapse text-sm">
-            <thead>
-              <tr className="border border-neutral-900">
-                <th className="border border-neutral-900 px-2 py-1 text-left">Nama Barang</th>
-                <th className="border border-neutral-900 px-2 py-1 text-center">Satuan</th>
-                <th className="border border-neutral-900 px-2 py-1 text-right">Quantity</th>
-                <th className="border border-neutral-900 px-2 py-1 text-center">Sisa</th>
-              </tr>
-            </thead>
-            <tbody>
-              {group.rows.map((r) => (
-                <tr key={r.id}>
-                  <td className="border border-neutral-900 px-2 py-1">{r.products?.name}</td>
-                  <td className="border border-neutral-900 px-2 py-1 text-center">
-                    {r.products?.units?.name}
-                  </td>
-                  <td className="border border-neutral-900 px-2 py-1 text-right">
-                    {r.quantity_sent}
-                  </td>
-                  <td className="border border-neutral-900 px-2 py-1 text-center">
-                    {r.quantity_returned || ""}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div className="mt-10 flex justify-between text-sm">
-            <p>Tanda Terima</p>
-            <p>Hormat Kami,</p>
-          </div>
-          <div className="h-16" />
-        </div>
-      ))}
-
-      {groupList.length === 0 ? (
-        <div className="rounded-lg border border-neutral-200 bg-white p-6 text-sm text-neutral-500">
-          Belum ada barang di surat jalan ini.
-        </div>
-      ) : null}
+      <PrintDocuments
+        groups={groupList}
+        code={order.code ?? ""}
+        tanggal={tanggal}
+        customerName={order.companies?.name}
+        destination={order.destination_address || order.companies?.address || ""}
+      />
     </div>
   );
 }
