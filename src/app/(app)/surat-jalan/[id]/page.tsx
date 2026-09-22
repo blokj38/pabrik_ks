@@ -5,6 +5,7 @@ import { DeliveryOrderActions } from "./delivery-order-actions";
 import { PrintDocuments } from "./print-documents";
 import { EditHeaderModal } from "./edit-header-modal";
 import { IssuedItemsEditor } from "./issued-items-editor";
+import { DeleteDeliveryOrderButton } from "../delete-button";
 
 const STATUS_LABEL: Record<string, string> = {
   draft: "Draft",
@@ -120,6 +121,11 @@ export default async function DeliveryOrderDetailPage({
               quantity_sent: r.quantity_sent,
               unit_name: r.products?.units?.name ?? null,
             }))}
+          />
+          <DeleteDeliveryOrderButton
+            deliveryOrderId={order.id}
+            code={order.code ?? ""}
+            redirectTo="/surat-jalan"
           />
         </div>
       </div>

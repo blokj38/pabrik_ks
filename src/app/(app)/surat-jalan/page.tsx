@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { DeleteDeliveryOrderButton } from "./delete-button";
 
 const STATUS_LABEL: Record<string, string> = {
   draft: "Draft",
@@ -47,6 +48,7 @@ export default async function SuratJalanPage() {
               <th className="px-4 py-3">Supir</th>
               <th className="px-4 py-3">Tanggal</th>
               <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-100">
@@ -69,11 +71,14 @@ export default async function SuratJalanPage() {
                     {STATUS_LABEL[o.status]}
                   </span>
                 </td>
+                <td className="px-4 py-3 text-right">
+                  <DeleteDeliveryOrderButton deliveryOrderId={o.id} code={o.code ?? ""} />
+                </td>
               </tr>
             ))}
             {(orders ?? []).length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-neutral-500">
+                <td colSpan={6} className="px-4 py-8 text-center text-neutral-500">
                   Belum ada surat jalan.
                 </td>
               </tr>

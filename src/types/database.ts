@@ -513,6 +513,10 @@ export type Database = {
         Args: { p_delivery_order_id: string }
         Returns: undefined
       }
+      delete_delivery_order: {
+        Args: { p_delivery_order_id: string }
+        Returns: undefined
+      }
       edit_delivery_order_item: {
         Args: {
           p_item_id: string

@@ -226,6 +226,17 @@ export async function removeDeliveryOrderItem(itemId: string) {
   return { error: error?.message ?? null };
 }
 
+export async function deleteDeliveryOrder(deliveryOrderId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_delivery_order", {
+    p_delivery_order_id: deliveryOrderId,
+  });
+  revalidatePath("/surat-jalan");
+  revalidatePath("/stok");
+  revalidatePath("/");
+  return { error: error?.message ?? null };
+}
+
 export async function completeDeliveryOrder(
   deliveryOrderId: string,
   returns: { item_id: string; quantity_returned: number }[]
