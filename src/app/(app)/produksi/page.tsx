@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { ProductionModal } from "./production-modal";
+import { DeleteProductionRunButton } from "./delete-production-run-button";
 
 export default async function ProduksiPage() {
   const supabase = await createClient();
@@ -78,13 +79,19 @@ export default async function ProduksiPage() {
             {runs.map((run) => (
               <li key={run.id} className="flex items-center justify-between py-2 text-sm">
                 <span className="text-neutral-800">{run.products?.name}</span>
-                <div className="text-right">
-                  <span className="font-medium text-emerald-600">
-                    +{run.quantity_produced} {run.products?.units?.name}
-                  </span>
-                  <p className="text-xs text-neutral-400">
-                    {new Date(run.produced_at).toLocaleString("id-ID")}
-                  </p>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <span className="font-medium text-emerald-600">
+                      +{run.quantity_produced} {run.products?.units?.name}
+                    </span>
+                    <p className="text-xs text-neutral-400">
+                      {new Date(run.produced_at).toLocaleString("id-ID")}
+                    </p>
+                  </div>
+                  <DeleteProductionRunButton
+                    productionRunId={run.id}
+                    productName={run.products?.name ?? "-"}
+                  />
                 </div>
               </li>
             ))}

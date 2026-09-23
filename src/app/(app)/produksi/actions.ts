@@ -34,3 +34,15 @@ export async function runProductionAction(
   revalidatePath("/");
   return { error: null, success: true };
 }
+
+export async function deleteProductionRun(productionRunId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_production_run", {
+    p_production_run_id: productionRunId,
+  });
+
+  revalidatePath("/produksi");
+  revalidatePath("/stok");
+  revalidatePath("/");
+  return { error: error?.message ?? null };
+}
