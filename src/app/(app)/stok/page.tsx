@@ -22,6 +22,7 @@ export default async function StokPage() {
   const productOptions = products.map((p) => ({
     id: p.id,
     name: p.name,
+    category: p.category,
     unit_name: p.units?.name ?? null,
   }));
 

@@ -3,14 +3,29 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { createStockMovement, type StockMovementState } from "./actions";
 
-type Product = { id: string; name: string; unit_name: string | null };
+type Product = {
+  id: string;
+  name: string;
+  category: "bahan_baku" | "barang_jadi";
+  unit_name: string | null;
+};
 
 const initialState: StockMovementState = { error: null };
 
+const CATEGORY_LABEL: Record<"semua" | "bahan_baku" | "barang_jadi", string> = {
+  semua: "Semua",
+  bahan_baku: "Bahan Baku",
+  barang_jadi: "Barang Jadi",
+};
+
 export function StockMovementModal({ products }: { products: Product[] }) {
   const [open, setOpen] = useState<"masuk" | "keluar" | null>(null);
+  const [category, setCategory] = useState<"semua" | "bahan_baku" | "barang_jadi">("semua");
   const [state, formAction, pending] = useActionState(createStockMovement, initialState);
   const formRef = useRef<HTMLFormElement>(null);
+
+  const filteredProducts =
+    category === "semua" ? products : products.filter((p) => p.category === category);
 
   useEffect(() => {
     if (state.success) {
@@ -48,6 +63,26 @@ export function StockMovementModal({ products }: { products: Product[] }) {
               <input type="hidden" name="direction" value={open} />
 
               <div>
+                <label className="block text-sm font-medium text-neutral-700">Kategori</label>
+                <div className="mt-1 flex gap-1">
+                  {(["semua", "bahan_baku", "barang_jadi"] as const).map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setCategory(c)}
+                      className={`flex-1 rounded-md border px-2 py-1.5 text-xs font-medium ${
+                        category === c
+                          ? "border-neutral-900 bg-neutral-900 text-white"
+                          : "border-neutral-300 text-neutral-700 hover:bg-neutral-100"
+                      }`}
+                    >
+                      {CATEGORY_LABEL[c]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-neutral-700">Produk</label>
                 <select
                   name="product_id"
@@ -55,7 +90,7 @@ export function StockMovementModal({ products }: { products: Product[] }) {
                   className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
                 >
                   <option value="">Pilih produk</option>
-                  {products.map((p) => (
+                  {filteredProducts.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name} {p.unit_name ? `(${p.unit_name})` : ""}
                     </option>
