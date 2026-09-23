@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { deleteCompany } from "./actions";
 import { CreateCompanyForm } from "./create-company-form";
+import { DeleteButton } from "./delete-button";
 
 const TYPE_LABEL: Record<string, string> = {
   customer: "Pelanggan",
@@ -44,9 +45,10 @@ export async function PerusahaanSection() {
                 <td className="px-4 py-3 text-neutral-600">{TYPE_LABEL[c.type]}</td>
                 <td className="px-4 py-3 text-neutral-600">{c.phone ?? "-"}</td>
                 <td className="px-4 py-3 text-right">
-                  <form action={deleteCompany.bind(null, c.id)}>
-                    <button className="text-xs text-red-600 hover:underline">Hapus</button>
-                  </form>
+                  <DeleteButton
+                    action={deleteCompany.bind(null, c.id)}
+                    confirmMessage={`Hapus perusahaan "${c.name}"?`}
+                  />
                 </td>
               </tr>
             ))}

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { deleteRecipe } from "./actions";
 import { CreateRecipeForm } from "./create-recipe-form";
+import { DeleteButton } from "./delete-button";
 
 export async function ResepSection() {
   const supabase = await createClient();
@@ -39,9 +40,10 @@ export async function ResepSection() {
                 <p className="font-medium text-neutral-900">{r.name}</p>
                 <p className="text-xs text-neutral-500">Hasil: {r.products?.name}</p>
               </div>
-              <form action={deleteRecipe.bind(null, r.id)}>
-                <button className="text-xs text-red-600 hover:underline">Hapus</button>
-              </form>
+              <DeleteButton
+                action={deleteRecipe.bind(null, r.id)}
+                confirmMessage={`Hapus resep "${r.name}"?`}
+              />
             </div>
             <ul className="mt-2 space-y-1 text-sm text-neutral-600">
               {(r.recipe_items ?? []).map((ri, idx) => (

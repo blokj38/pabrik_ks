@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { deleteProduct } from "./actions";
 import { CreateProductForm } from "./create-product-form";
 import { EditProductModal } from "./edit-product-modal";
+import { DeleteButton } from "./delete-button";
 
 export async function ProdukSection() {
   const supabase = await createClient();
@@ -68,9 +69,10 @@ export async function ProdukSection() {
                       units={units}
                       businessUnits={businessUnits}
                     />
-                    <form action={deleteProduct.bind(null, p.id)}>
-                      <button className="text-xs text-red-600 hover:underline">Hapus</button>
-                    </form>
+                    <DeleteButton
+                      action={deleteProduct.bind(null, p.id)}
+                      confirmMessage={`Hapus produk "${p.name}"?`}
+                    />
                   </div>
                 </td>
               </tr>

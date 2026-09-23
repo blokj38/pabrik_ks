@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { deleteBusinessUnit } from "./actions";
 import { CreateBusinessUnitForm } from "./create-business-unit-form";
+import { DeleteButton } from "./delete-button";
 
 export async function UnitUsahaSection() {
   const supabase = await createClient();
@@ -37,9 +38,10 @@ export async function UnitUsahaSection() {
                 <td className="px-4 py-3 font-medium text-neutral-900">{bu.name}</td>
                 <td className="px-4 py-3 text-neutral-600">{bu.address ?? "-"}</td>
                 <td className="px-4 py-3 text-right">
-                  <form action={deleteBusinessUnit.bind(null, bu.id)}>
-                    <button className="text-xs text-red-600 hover:underline">Hapus</button>
-                  </form>
+                  <DeleteButton
+                    action={deleteBusinessUnit.bind(null, bu.id)}
+                    confirmMessage={`Hapus unit usaha "${bu.name}"?`}
+                  />
                 </td>
               </tr>
             ))}

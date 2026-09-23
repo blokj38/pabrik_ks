@@ -4,6 +4,15 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 export type FormState = { error: string | null };
+export type DeleteState = { error: string | null };
+
+function friendlyDeleteError(error: { code?: string; message: string } | null, whatUsesIt: string) {
+  if (!error) return null;
+  if (error.code === "23503") {
+    return `Tidak bisa dihapus karena masih dipakai di ${whatUsesIt}.`;
+  }
+  return error.message;
+}
 
 export async function createUnit(_prev: FormState, formData: FormData): Promise<FormState> {
   const supabase = await createClient();
@@ -17,10 +26,11 @@ export async function createUnit(_prev: FormState, formData: FormData): Promise<
   return { error: null };
 }
 
-export async function deleteUnit(id: string) {
+export async function deleteUnit(id: string): Promise<DeleteState> {
   const supabase = await createClient();
-  await supabase.from("units").delete().eq("id", id);
+  const { error } = await supabase.from("units").delete().eq("id", id);
   revalidatePath("/master-data");
+  return { error: friendlyDeleteError(error, "data produk") };
 }
 
 export async function createCompany(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -47,10 +57,11 @@ export async function createCompany(_prev: FormState, formData: FormData): Promi
   return { error: null };
 }
 
-export async function deleteCompany(id: string) {
+export async function deleteCompany(id: string): Promise<DeleteState> {
   const supabase = await createClient();
-  await supabase.from("companies").delete().eq("id", id);
+  const { error } = await supabase.from("companies").delete().eq("id", id);
   revalidatePath("/master-data");
+  return { error: friendlyDeleteError(error, "riwayat surat jalan") };
 }
 
 export async function createProduct(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -85,11 +96,14 @@ export async function createProduct(_prev: FormState, formData: FormData): Promi
   return { error: null };
 }
 
-export async function deleteProduct(id: string) {
+export async function deleteProduct(id: string): Promise<DeleteState> {
   const supabase = await createClient();
-  await supabase.from("products").delete().eq("id", id);
+  const { error } = await supabase.from("products").delete().eq("id", id);
   revalidatePath("/master-data");
   revalidatePath("/stok");
+  return {
+    error: friendlyDeleteError(error, "riwayat stok/produksi/surat jalan"),
+  };
 }
 
 export type ProductFormState = { error: string | null; success?: boolean };
@@ -175,11 +189,12 @@ export async function createRecipe(_prev: FormState, formData: FormData): Promis
   return { error: null };
 }
 
-export async function deleteRecipe(id: string) {
+export async function deleteRecipe(id: string): Promise<DeleteState> {
   const supabase = await createClient();
-  await supabase.from("recipes").delete().eq("id", id);
+  const { error } = await supabase.from("recipes").delete().eq("id", id);
   revalidatePath("/master-data");
   revalidatePath("/produksi");
+  return { error: friendlyDeleteError(error, "riwayat produksi") };
 }
 
 export async function createBusinessUnit(
@@ -198,8 +213,9 @@ export async function createBusinessUnit(
   return { error: null };
 }
 
-export async function deleteBusinessUnit(id: string) {
+export async function deleteBusinessUnit(id: string): Promise<DeleteState> {
   const supabase = await createClient();
-  await supabase.from("business_units").delete().eq("id", id);
+  const { error } = await supabase.from("business_units").delete().eq("id", id);
   revalidatePath("/master-data");
+  return { error: friendlyDeleteError(error, "data produk") };
 }
