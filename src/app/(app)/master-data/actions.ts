@@ -150,30 +150,46 @@ export async function updateProduct(
 export async function createRecipe(_prev: FormState, formData: FormData): Promise<FormState> {
   const supabase = await createClient();
   const name = String(formData.get("name") ?? "").trim();
-  const finishedProductId = String(formData.get("finished_product_id") ?? "");
   const itemsRaw = String(formData.get("items") ?? "[]");
+  const outputsRaw = String(formData.get("outputs") ?? "[]");
 
   let items: { raw_material_id: string; quantity_per_unit: number }[] = [];
+  let outputs: { product_id: string; quantity_per_batch: number }[] = [];
   try {
     items = JSON.parse(itemsRaw).filter(
       (it: { raw_material_id: string; quantity_per_unit: number }) =>
         it.raw_material_id && it.quantity_per_unit > 0
     );
+    outputs = JSON.parse(outputsRaw).filter(
+      (o: { product_id: string; quantity_per_batch: number }) =>
+        o.product_id && o.quantity_per_batch > 0
+    );
   } catch {
-    return { error: "Data bahan tidak valid." };
+    return { error: "Data resep tidak valid." };
   }
 
-  if (!name || !finishedProductId || items.length === 0) {
-    return { error: "Nama resep, produk hasil, dan minimal satu bahan wajib diisi." };
+  if (!name || outputs.length === 0 || items.length === 0) {
+    return {
+      error: "Nama resep, minimal satu barang jadi hasil, dan minimal satu bahan wajib diisi.",
+    };
   }
 
   const { data: recipe, error } = await supabase
     .from("recipes")
-    .insert({ name, finished_product_id: finishedProductId })
+    .insert({ name })
     .select("id")
     .single();
 
   if (error || !recipe) return { error: error?.message ?? "Gagal membuat resep." };
+
+  const { error: outputsError } = await supabase.from("recipe_outputs").insert(
+    outputs.map((o) => ({
+      recipe_id: recipe.id,
+      product_id: o.product_id,
+      quantity_per_batch: o.quantity_per_batch,
+    }))
+  );
+  if (outputsError) return { error: outputsError.message };
 
   const { error: itemsError } = await supabase.from("recipe_items").insert(
     items.map((it) => ({

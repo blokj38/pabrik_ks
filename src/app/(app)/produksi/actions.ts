@@ -12,16 +12,16 @@ export async function runProductionAction(
   const supabase = await createClient();
 
   const recipeId = String(formData.get("recipe_id") ?? "");
-  const quantity = Number(formData.get("quantity") ?? 0);
+  const batchQuantity = Number(formData.get("batch_quantity") ?? 0);
   const note = String(formData.get("note") ?? "") || undefined;
 
-  if (!recipeId || !quantity || quantity <= 0) {
-    return { error: "Resep dan jumlah produksi wajib diisi." };
+  if (!recipeId || !batchQuantity || batchQuantity <= 0) {
+    return { error: "Resep dan jumlah batch wajib diisi." };
   }
 
   const { error } = await supabase.rpc("run_production", {
     p_recipe_id: recipeId,
-    p_quantity_produced: quantity,
+    p_batch_quantity: batchQuantity,
     p_note: note,
   });
 

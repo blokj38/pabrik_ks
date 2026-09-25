@@ -4,22 +4,23 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { runProductionAction, type ProductionState } from "./actions";
 
 type Ingredient = { name: string; quantity_per_unit: number; unit_name: string | null };
+type Output = { name: string; quantity_per_batch: number; unit_name: string | null };
 
 const initialState: ProductionState = { error: null };
 
 export function ProductionModal({
   recipeId,
   recipeName,
-  finishedUnitName,
+  outputs,
   ingredients,
 }: {
   recipeId: string;
   recipeName: string;
-  finishedUnitName: string | null;
+  outputs: Output[];
   ingredients: Ingredient[];
 }) {
   const [open, setOpen] = useState(false);
-  const [quantity, setQuantity] = useState(1);
+  const [batchQuantity, setBatchQuantity] = useState(1);
   const [state, formAction, pending] = useActionState(runProductionAction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -49,19 +50,32 @@ export function ProductionModal({
               <input type="hidden" name="recipe_id" value={recipeId} />
 
               <div>
-                <label className="block text-sm font-medium text-neutral-700">
-                  Jumlah diproduksi {finishedUnitName ? `(${finishedUnitName})` : ""}
-                </label>
+                <label className="block text-sm font-medium text-neutral-700">Jumlah Batch</label>
                 <input
-                  name="quantity"
+                  name="batch_quantity"
                   type="number"
                   step="any"
                   min="0"
                   required
-                  value={quantity}
-                  onChange={(e) => setQuantity(Number(e.target.value) || 0)}
+                  value={batchQuantity}
+                  onChange={(e) => setBatchQuantity(Number(e.target.value) || 0)}
                   className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
                 />
+              </div>
+
+              <div className="rounded-md bg-emerald-50 p-3 text-sm">
+                <p className="mb-1 font-medium text-emerald-700">Barang jadi dihasilkan:</p>
+                <ul className="space-y-1">
+                  {outputs.map((out) => (
+                    <li key={out.name} className="flex justify-between text-emerald-700">
+                      <span>{out.name}</span>
+                      <span>
+                        {(out.quantity_per_batch * batchQuantity).toLocaleString("id-ID")}{" "}
+                        {out.unit_name}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </div>
 
               <div className="rounded-md bg-neutral-50 p-3 text-sm">
@@ -71,7 +85,7 @@ export function ProductionModal({
                     <li key={ing.name} className="flex justify-between text-neutral-600">
                       <span>{ing.name}</span>
                       <span>
-                        {(ing.quantity_per_unit * quantity).toLocaleString("id-ID")}{" "}
+                        {(ing.quantity_per_unit * batchQuantity).toLocaleString("id-ID")}{" "}
                         {ing.unit_name}
                       </span>
                     </li>

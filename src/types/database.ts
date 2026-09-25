@@ -148,30 +148,33 @@ export type Database = {
       }
       production_runs: {
         Row: {
-          finished_product_id: string
+          batch_quantity: number | null
+          finished_product_id: string | null
           id: string
           note: string | null
           produced_at: string
           produced_by: string | null
-          quantity_produced: number
+          quantity_produced: number | null
           recipe_id: string
         }
         Insert: {
-          finished_product_id: string
+          batch_quantity?: number | null
+          finished_product_id?: string | null
           id?: string
           note?: string | null
           produced_at?: string
           produced_by?: string | null
-          quantity_produced: number
+          quantity_produced?: number | null
           recipe_id: string
         }
         Update: {
-          finished_product_id?: string
+          batch_quantity?: number | null
+          finished_product_id?: string | null
           id?: string
           note?: string | null
           produced_at?: string
           produced_by?: string | null
-          quantity_produced?: number
+          quantity_produced?: number | null
           recipe_id?: string
         }
         Relationships: [
@@ -191,6 +194,78 @@ export type Database = {
           },
           {
             foreignKeyName: "production_runs_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_run_outputs: {
+        Row: {
+          id: string
+          product_id: string
+          production_run_id: string
+          quantity_produced: number
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          production_run_id: string
+          quantity_produced: number
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          production_run_id?: string
+          quantity_produced?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_run_outputs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_run_outputs_production_run_id_fkey"
+            columns: ["production_run_id"]
+            isOneToOne: false
+            referencedRelation: "production_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_outputs: {
+        Row: {
+          id: string
+          product_id: string
+          quantity_per_batch: number
+          recipe_id: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          quantity_per_batch: number
+          recipe_id: string
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          quantity_per_batch?: number
+          recipe_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_outputs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_outputs_recipe_id_fkey"
             columns: ["recipe_id"]
             isOneToOne: false
             referencedRelation: "recipes"
@@ -346,19 +421,19 @@ export type Database = {
       recipes: {
         Row: {
           created_at: string
-          finished_product_id: string
+          finished_product_id: string | null
           id: string
           name: string
         }
         Insert: {
           created_at?: string
-          finished_product_id: string
+          finished_product_id?: string | null
           id?: string
           name: string
         }
         Update: {
           created_at?: string
-          finished_product_id?: string
+          finished_product_id?: string | null
           id?: string
           name?: string
         }
@@ -545,7 +620,7 @@ export type Database = {
       run_production: {
         Args: {
           p_note?: string
-          p_quantity_produced: number
+          p_batch_quantity: number
           p_recipe_id: string
         }
         Returns: string

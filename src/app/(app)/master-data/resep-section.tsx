@@ -10,7 +10,7 @@ export async function ResepSection() {
     supabase
       .from("recipes")
       .select(
-        "id, name, products!recipes_finished_product_id_fkey(name), recipe_items(quantity_per_unit, products!recipe_items_raw_material_id_fkey(name, units(name)))"
+        "id, name, recipe_outputs(quantity_per_batch, products(name, units(name))), recipe_items(quantity_per_unit, products!recipe_items_raw_material_id_fkey(name, units(name)))"
       )
       .order("name"),
     supabase.from("products").select("id, name, category, units(name)").order("name"),
@@ -18,7 +18,9 @@ export async function ResepSection() {
 
   const recipes = recipesRes.data ?? [];
   const allProducts = productsRes.data ?? [];
-  const finishedProducts = allProducts.filter((p) => p.category === "barang_jadi");
+  const finishedProducts = allProducts
+    .filter((p) => p.category === "barang_jadi")
+    .map((p) => ({ id: p.id, name: p.name, unit_name: p.units?.name ?? null }));
   const rawMaterials = allProducts
     .filter((p) => p.category === "bahan_baku")
     .map((p) => ({ id: p.id, name: p.name, unit_name: p.units?.name ?? null }));
@@ -38,7 +40,12 @@ export async function ResepSection() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium text-neutral-900">{r.name}</p>
-                <p className="text-xs text-neutral-500">Hasil: {r.products?.name}</p>
+                <p className="text-xs text-neutral-500">
+                  Hasil:{" "}
+                  {(r.recipe_outputs ?? [])
+                    .map((ro) => `${ro.products?.name} (${ro.quantity_per_batch} ${ro.products?.units?.name ?? ""})`)
+                    .join(", ")}
+                </p>
               </div>
               <DeleteButton
                 action={deleteRecipe.bind(null, r.id)}
