@@ -237,42 +237,6 @@ export type Database = {
           },
         ]
       }
-      recipe_outputs: {
-        Row: {
-          id: string
-          product_id: string
-          quantity_per_batch: number
-          recipe_id: string
-        }
-        Insert: {
-          id?: string
-          product_id: string
-          quantity_per_batch: number
-          recipe_id: string
-        }
-        Update: {
-          id?: string
-          product_id?: string
-          quantity_per_batch?: number
-          recipe_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "recipe_outputs_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "recipe_outputs_recipe_id_fkey"
-            columns: ["recipe_id"]
-            isOneToOne: false
-            referencedRelation: "recipes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       products: {
         Row: {
           business_model: Database["public"]["Enums"]["business_model"]
@@ -621,6 +585,7 @@ export type Database = {
         Args: {
           p_note?: string
           p_batch_quantity: number
+          p_outputs: Json
           p_recipe_id: string
         }
         Returns: string

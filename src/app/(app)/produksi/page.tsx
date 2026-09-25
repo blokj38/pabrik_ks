@@ -5,11 +5,11 @@ import { DeleteProductionRunButton } from "./delete-production-run-button";
 export default async function ProduksiPage() {
   const supabase = await createClient();
 
-  const [recipesRes, runsRes] = await Promise.all([
+  const [recipesRes, runsRes, finishedProductsRes] = await Promise.all([
     supabase
       .from("recipes")
       .select(
-        "id, name, recipe_outputs(quantity_per_batch, products(name, units(name))), recipe_items(quantity_per_unit, products!recipe_items_raw_material_id_fkey(name, units(name)))"
+        "id, name, recipe_items(quantity_per_unit, products!recipe_items_raw_material_id_fkey(name, units(name)))"
       )
       .order("name"),
     supabase
@@ -19,10 +19,20 @@ export default async function ProduksiPage() {
       )
       .order("produced_at", { ascending: false })
       .limit(10),
+    supabase
+      .from("products")
+      .select("id, name, category, units(name)")
+      .eq("category", "barang_jadi")
+      .order("name"),
   ]);
 
   const recipes = recipesRes.data ?? [];
   const runs = runsRes.data ?? [];
+  const finishedProducts = (finishedProductsRes.data ?? []).map((p) => ({
+    id: p.id,
+    name: p.name,
+    unit_name: p.units?.name ?? null,
+  }));
 
   return (
     <div className="space-y-6">
@@ -40,11 +50,6 @@ export default async function ProduksiPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {recipes.map((r) => {
-            const outputs = (r.recipe_outputs ?? []).map((ro) => ({
-              name: ro.products?.name ?? "-",
-              quantity_per_batch: ro.quantity_per_batch,
-              unit_name: ro.products?.units?.name ?? null,
-            }));
             const ingredients = (r.recipe_items ?? []).map((ri) => ({
               name: ri.products?.name ?? "-",
               quantity_per_unit: ri.quantity_per_unit,
@@ -54,9 +59,6 @@ export default async function ProduksiPage() {
             return (
               <div key={r.id} className="rounded-lg border border-neutral-200 bg-white p-4">
                 <p className="font-semibold text-neutral-900">{r.name}</p>
-                <p className="text-xs text-neutral-500">
-                  Hasil: {outputs.map((o) => `${o.name} (${o.quantity_per_batch} ${o.unit_name ?? ""})`).join(", ")}
-                </p>
                 <ul className="mt-3 space-y-1 text-sm text-neutral-600">
                   {ingredients.map((ing) => (
                     <li key={ing.name}>
@@ -68,8 +70,8 @@ export default async function ProduksiPage() {
                   <ProductionModal
                     recipeId={r.id}
                     recipeName={r.name}
-                    outputs={outputs}
                     ingredients={ingredients}
+                    finishedProducts={finishedProducts}
                   />
                 </div>
               </div>

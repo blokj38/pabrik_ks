@@ -10,7 +10,7 @@ export async function ResepSection() {
     supabase
       .from("recipes")
       .select(
-        "id, name, recipe_outputs(quantity_per_batch, products(name, units(name))), recipe_items(quantity_per_unit, products!recipe_items_raw_material_id_fkey(name, units(name)))"
+        "id, name, recipe_items(quantity_per_unit, products!recipe_items_raw_material_id_fkey(name, units(name)))"
       )
       .order("name"),
     supabase.from("products").select("id, name, category, units(name)").order("name"),
@@ -18,9 +18,6 @@ export async function ResepSection() {
 
   const recipes = recipesRes.data ?? [];
   const allProducts = productsRes.data ?? [];
-  const finishedProducts = allProducts
-    .filter((p) => p.category === "barang_jadi")
-    .map((p) => ({ id: p.id, name: p.name, unit_name: p.units?.name ?? null }));
   const rawMaterials = allProducts
     .filter((p) => p.category === "bahan_baku")
     .map((p) => ({ id: p.id, name: p.name, unit_name: p.units?.name ?? null }));
@@ -30,7 +27,7 @@ export async function ResepSection() {
       <div className="rounded-lg border border-neutral-200 bg-white p-4 lg:col-span-1">
         <h2 className="text-sm font-semibold text-neutral-900">Tambah Resep (BOM)</h2>
         <div className="mt-3">
-          <CreateRecipeForm finishedProducts={finishedProducts} rawMaterials={rawMaterials} />
+          <CreateRecipeForm rawMaterials={rawMaterials} />
         </div>
       </div>
 
@@ -38,15 +35,7 @@ export async function ResepSection() {
         {recipes.map((r) => (
           <div key={r.id} className="rounded-lg border border-neutral-200 bg-white p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-neutral-900">{r.name}</p>
-                <p className="text-xs text-neutral-500">
-                  Hasil:{" "}
-                  {(r.recipe_outputs ?? [])
-                    .map((ro) => `${ro.products?.name} (${ro.quantity_per_batch} ${ro.products?.units?.name ?? ""})`)
-                    .join(", ")}
-                </p>
-              </div>
+              <p className="font-medium text-neutral-900">{r.name}</p>
               <DeleteButton
                 action={deleteRecipe.bind(null, r.id)}
                 confirmMessage={`Hapus resep "${r.name}"?`}
@@ -55,7 +44,7 @@ export async function ResepSection() {
             <ul className="mt-2 space-y-1 text-sm text-neutral-600">
               {(r.recipe_items ?? []).map((ri, idx) => (
                 <li key={idx}>
-                  {ri.products?.name} — {ri.quantity_per_unit} {ri.products?.units?.name}
+                  {ri.products?.name} — {ri.quantity_per_unit} {ri.products?.units?.name} / batch
                 </li>
               ))}
             </ul>
