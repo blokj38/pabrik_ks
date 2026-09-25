@@ -43,6 +43,10 @@ create policy "production_run_outputs_select" on production_run_outputs for sele
   using (auth.role() = 'authenticated');
 
 -- ============ UPDATED PRODUCTION RPC (multi-output) ============
+-- Postgres won't let CREATE OR REPLACE rename a parameter, so the old
+-- signature (p_quantity_produced) must be dropped first.
+drop function if exists run_production(uuid, numeric, text);
+
 create or replace function run_production(
   p_recipe_id uuid,
   p_batch_quantity numeric,
@@ -139,3 +143,8 @@ begin
   delete from production_runs where id = p_production_run_id;
 end;
 $$;
+
+-- dropping run_production reset its grants to the Postgres default
+-- (PUBLIC can execute); lock it back down to authenticated-only.
+revoke execute on function run_production(uuid, numeric, text) from public, anon;
+grant execute on function run_production(uuid, numeric, text) to authenticated;
