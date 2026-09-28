@@ -28,6 +28,10 @@ const PAGE_WIDTH_IN = 9.5;
 const PAGE_HEIGHT_IN = 11;
 const PAGE_MARGIN_IN = 0.35;
 const HALF_ROW_HEIGHT_IN = PAGE_HEIGHT_IN / 2 - PAGE_MARGIN_IN;
+const CONTENT_WIDTH_TWIP = convertInchesToTwip(PAGE_WIDTH_IN - 2 * PAGE_MARGIN_IN);
+// TextRun size is in half-points, so 28 = 14pt.
+const FONT_SIZE = 28;
+const HEADING_FONT_SIZE = 32;
 
 const noBorder = {
   top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
@@ -115,7 +119,7 @@ export async function GET(
       children: [
         new Paragraph({
           alignment: opts.align,
-          children: [new TextRun({ text, bold: opts.bold })],
+          children: [new TextRun({ text, bold: opts.bold, size: FONT_SIZE })],
         }),
       ],
     });
@@ -133,10 +137,17 @@ export async function GET(
               width: { size: 50, type: WidthType.PERCENTAGE },
               children: [
                 new Paragraph({
-                  children: [new TextRun({ text: group.unitName, bold: true, size: 28 })],
+                  children: [
+                    new TextRun({ text: group.unitName, bold: true, size: HEADING_FONT_SIZE }),
+                  ],
                 }),
                 new Paragraph({
-                  children: [new TextRun({ text: `Surat Jalan No: ${safeOrder.code ?? ""}` })],
+                  children: [
+                    new TextRun({
+                      text: `Surat Jalan No: ${safeOrder.code ?? ""}`,
+                      size: FONT_SIZE,
+                    }),
+                  ],
                 }),
               ],
             }),
@@ -146,17 +157,23 @@ export async function GET(
               children: [
                 new Paragraph({
                   alignment: AlignmentType.RIGHT,
-                  children: [new TextRun({ text: `Tanggal   ${tanggal}` })],
+                  children: [new TextRun({ text: `Tanggal   ${tanggal}`, size: FONT_SIZE })],
                 }),
                 new Paragraph({
                   alignment: AlignmentType.RIGHT,
-                  children: [new TextRun({ text: `Tuan   ${safeOrder.companies?.name ?? ""}` })],
+                  children: [
+                    new TextRun({
+                      text: `Tuan   ${safeOrder.companies?.name ?? ""}`,
+                      size: FONT_SIZE,
+                    }),
+                  ],
                 }),
                 new Paragraph({
                   alignment: AlignmentType.RIGHT,
                   children: [
                     new TextRun({
                       text: `Toko   ${safeOrder.destination_address || safeOrder.companies?.address || "-"}`,
+                      size: FONT_SIZE,
                     }),
                   ],
                 }),
@@ -205,7 +222,11 @@ export async function GET(
             new TableCell({
               borders: noBorder,
               width: { size: 50, type: WidthType.PERCENTAGE },
-              children: [new Paragraph({ children: [new TextRun({ text: "Tanda Terima" })] })],
+              children: [
+                new Paragraph({
+                  children: [new TextRun({ text: "Tanda Terima", size: FONT_SIZE })],
+                }),
+              ],
             }),
             new TableCell({
               borders: noBorder,
@@ -213,7 +234,7 @@ export async function GET(
               children: [
                 new Paragraph({
                   alignment: AlignmentType.RIGHT,
-                  children: [new TextRun({ text: "Hormat Kami," })],
+                  children: [new TextRun({ text: "Hormat Kami,", size: FONT_SIZE })],
                 }),
               ],
             }),
@@ -260,7 +281,8 @@ export async function GET(
   const sections = pages.map((pageGroups) => {
     if (pageGroups.length === 2) {
       const splitTable = new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
+        width: { size: CONTENT_WIDTH_TWIP, type: WidthType.DXA },
+        columnWidths: [CONTENT_WIDTH_TWIP],
         borders: noBorder,
         rows: pageGroups.map(
           (g) =>
@@ -269,6 +291,7 @@ export async function GET(
               children: [
                 new TableCell({
                   borders: noBorder,
+                  width: { size: CONTENT_WIDTH_TWIP, type: WidthType.DXA },
                   children: buildGroupContent(g),
                 }),
               ],
