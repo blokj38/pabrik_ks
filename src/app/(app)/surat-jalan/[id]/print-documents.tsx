@@ -73,6 +73,14 @@ export function PrintDocuments({
             >
               Download Word
             </a>
+            <a
+              href={`/api/surat-jalan/${deliveryOrderId}/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
+            >
+              Download PDF
+            </a>
           </div>
         </div>
       ) : (
@@ -89,6 +97,14 @@ export function PrintDocuments({
             className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
           >
             Download Word
+          </a>
+          <a
+            href={`/api/surat-jalan/${deliveryOrderId}/pdf`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
+          >
+            Download PDF
           </a>
         </div>
       )}
