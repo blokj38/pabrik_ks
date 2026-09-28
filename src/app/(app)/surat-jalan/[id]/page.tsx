@@ -147,6 +147,7 @@ export default async function DeliveryOrderDetailPage({
       ) : null}
 
       <PrintDocuments
+        deliveryOrderId={order.id}
         groups={groupList}
         code={order.code ?? ""}
         tanggal={tanggal}
