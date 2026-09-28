@@ -1,23 +1,37 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { StockMovementModal } from "./stock-movement-modal";
 
-export default async function StokPage() {
+export default async function StokPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ unit_usaha?: string }>;
+}) {
+  const { unit_usaha: unitUsaha = "" } = await searchParams;
   const supabase = await createClient();
 
-  const [productsRes, movementsRes] = await Promise.all([
+  const [productsRes, movementsRes, businessUnitsRes] = await Promise.all([
     supabase
       .from("products")
-      .select("id, name, category, business_model, current_stock, min_stock, units(name)")
+      .select(
+        "id, name, category, business_model, current_stock, min_stock, business_unit_id, units(name), business_units(name)"
+      )
       .order("name"),
     supabase
       .from("stock_movements")
       .select("id, movement_type, quantity, note, created_at, products(name, units(name))")
       .order("created_at", { ascending: false })
       .limit(20),
+    supabase.from("business_units").select("id, name").order("name"),
   ]);
 
-  const products = productsRes.data ?? [];
+  const allProducts = productsRes.data ?? [];
   const movements = movementsRes.data ?? [];
+  const businessUnits = businessUnitsRes.data ?? [];
+
+  const products = unitUsaha
+    ? allProducts.filter((p) => p.business_unit_id === unitUsaha)
+    : allProducts;
 
   const productOptions = products.map((p) => ({
     id: p.id,
@@ -34,10 +48,37 @@ export default async function StokPage() {
         <div>
           <h1 className="text-lg font-semibold text-neutral-900">Stok</h1>
           <p className="text-sm text-neutral-500">
-            Bahan baku dan barang jadi — {products.length} produk terdaftar.
+            Bahan baku dan barang jadi — {products.length} produk
+            {unitUsaha ? " (difilter)" : " terdaftar"}.
           </p>
         </div>
         <StockMovementModal products={productOptions} />
+      </div>
+
+      <div className="flex flex-wrap gap-1 border-b border-neutral-200">
+        <Link
+          href="/stok"
+          className={`border-b-2 px-4 py-2 text-sm font-medium ${
+            !unitUsaha
+              ? "border-neutral-900 text-neutral-900"
+              : "border-transparent text-neutral-500 hover:text-neutral-800"
+          }`}
+        >
+          Semua
+        </Link>
+        {businessUnits.map((bu) => (
+          <Link
+            key={bu.id}
+            href={`/stok?unit_usaha=${bu.id}`}
+            className={`border-b-2 px-4 py-2 text-sm font-medium ${
+              unitUsaha === bu.id
+                ? "border-neutral-900 text-neutral-900"
+                : "border-transparent text-neutral-500 hover:text-neutral-800"
+            }`}
+          >
+            {bu.name}
+          </Link>
+        ))}
       </div>
 
       <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
@@ -46,7 +87,7 @@ export default async function StokPage() {
             <tr>
               <th className="px-4 py-3">Nama</th>
               <th className="px-4 py-3">Kategori</th>
-              <th className="px-4 py-3">Model</th>
+              <th className="px-4 py-3">Unit Usaha</th>
               <th className="px-4 py-3 text-right">Stok</th>
               <th className="px-4 py-3 text-right">Min. Stok</th>
             </tr>
@@ -60,9 +101,7 @@ export default async function StokPage() {
                   <td className="px-4 py-3 text-neutral-600">
                     {p.category === "bahan_baku" ? "Bahan Baku" : "Barang Jadi"}
                   </td>
-                  <td className="px-4 py-3 text-neutral-600">
-                    {p.business_model === "manufaktur" ? "Manufaktur" : "Trading"}
-                  </td>
+                  <td className="px-4 py-3 text-neutral-600">{p.business_units?.name ?? "-"}</td>
                   <td
                     className={`px-4 py-3 text-right font-medium ${
                       low ? "text-red-600" : "text-neutral-900"
@@ -79,7 +118,7 @@ export default async function StokPage() {
             {products.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-neutral-500">
-                  Belum ada produk. Tambahkan lewat Master Data.
+                  Belum ada produk untuk filter ini.
                 </td>
               </tr>
             ) : null}
