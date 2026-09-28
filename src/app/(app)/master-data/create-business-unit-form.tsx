@@ -34,6 +34,11 @@ export function CreateBusinessUnitForm() {
         />
       </div>
 
+      <label className="flex items-center gap-2 text-sm text-neutral-700">
+        <input type="checkbox" name="half_page" value="true" className="h-4 w-4 rounded border-neutral-300" />
+        Cetak setengah halaman (kertas 3 ply dibagi 2)
+      </label>
+
       {state.error ? <p className="text-sm text-red-600">{state.error}</p> : null}
 
       <button

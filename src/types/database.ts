@@ -311,18 +311,21 @@ export type Database = {
         Row: {
           address: string | null
           created_at: string
+          half_page: boolean
           id: string
           name: string
         }
         Insert: {
           address?: string | null
           created_at?: string
+          half_page?: boolean
           id?: string
           name: string
         }
         Update: {
           address?: string | null
           created_at?: string
+          half_page?: boolean
           id?: string
           name?: string
         }

@@ -203,13 +203,26 @@ export async function createBusinessUnit(
   const supabase = await createClient();
   const name = String(formData.get("name") ?? "").trim();
   const address = String(formData.get("address") ?? "") || null;
+  const halfPage = formData.get("half_page") === "true";
   if (!name) return { error: "Nama unit usaha wajib diisi." };
 
-  const { error } = await supabase.from("business_units").insert({ name, address });
+  const { error } = await supabase
+    .from("business_units")
+    .insert({ name, address, half_page: halfPage });
   if (error) return { error: error.message };
 
   revalidatePath("/master-data");
   return { error: null };
+}
+
+export async function setBusinessUnitHalfPage(id: string, halfPage: boolean) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("business_units")
+    .update({ half_page: halfPage })
+    .eq("id", id);
+  revalidatePath("/master-data");
+  return { error: error?.message ?? null };
 }
 
 export async function deleteBusinessUnit(id: string): Promise<DeleteState> {

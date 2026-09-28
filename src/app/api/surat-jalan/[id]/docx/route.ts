@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   AlignmentType,
   BorderStyle,
+  convertInchesToTwip,
   Document,
   HeightRule,
   Packer,
@@ -14,6 +15,16 @@ import {
   WidthType,
 } from "docx";
 import { createClient } from "@/lib/supabase/server";
+
+// Continuous 3-ply dot-matrix paper: 9.5 x 11 in per physical sheet, split
+// into two 9.5 x 5.5 in form slots. A business unit flagged half_page gets
+// a section sized to one slot; two such sections in a row land on the same
+// physical sheet without a page break between them. Everything else gets
+// a full 9.5 x 11 in sheet to itself.
+const PAGE_WIDTH_IN = 9.5;
+const HALF_PAGE_HEIGHT_IN = 5.5;
+const FULL_PAGE_HEIGHT_IN = 11;
+const PAGE_MARGIN_IN = 0.35;
 
 const noBorder = {
   top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
@@ -51,7 +62,7 @@ export async function GET(
   const { data: items } = await supabase
     .from("delivery_order_items")
     .select(
-      "id, quantity_sent, quantity_returned, products(name, units(name), business_unit_id, business_units(name))"
+      "id, quantity_sent, quantity_returned, products(name, units(name), business_unit_id, business_units(name, half_page))"
     )
     .eq("delivery_order_id", id);
 
@@ -64,11 +75,12 @@ export async function GET(
     quantity_sent: number;
     quantity_returned: number;
   };
-  const groups = new Map<string, { unitName: string; rows: Row[] }>();
+  const groups = new Map<string, { unitName: string; halfPage: boolean; rows: Row[] }>();
   for (const r of rows) {
     const key = r.products?.business_unit_id ?? "lainnya";
     const unitName = r.products?.business_units?.name ?? "Lainnya";
-    const group = groups.get(key) ?? { unitName, rows: [] };
+    const halfPage = r.products?.business_units?.half_page ?? false;
+    const group = groups.get(key) ?? { unitName, halfPage, rows: [] };
     group.rows.push({
       id: r.id,
       product_name: r.products?.name ?? "-",
@@ -100,7 +112,7 @@ export async function GET(
     });
   }
 
-  const sections = groupList.map((group, i) => {
+  const sections = groupList.map((group) => {
     const headerTable = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
       borders: noBorder,
@@ -201,8 +213,24 @@ export async function GET(
       ],
     });
 
+    const pageHeightIn = group.halfPage ? HALF_PAGE_HEIGHT_IN : FULL_PAGE_HEIGHT_IN;
+
     return {
-      properties: i > 0 ? { type: "nextPage" as const } : undefined,
+      properties: {
+        type: "nextPage" as const,
+        page: {
+          size: {
+            width: convertInchesToTwip(PAGE_WIDTH_IN),
+            height: convertInchesToTwip(pageHeightIn),
+          },
+          margin: {
+            top: convertInchesToTwip(PAGE_MARGIN_IN),
+            bottom: convertInchesToTwip(PAGE_MARGIN_IN),
+            left: convertInchesToTwip(PAGE_MARGIN_IN),
+            right: convertInchesToTwip(PAGE_MARGIN_IN),
+          },
+        },
+      },
       children: [
         headerTable,
         new Paragraph({ text: "" }),
@@ -214,7 +242,22 @@ export async function GET(
   });
 
   const doc = new Document({
-    sections: sections.length > 0 ? sections : [{ children: [new Paragraph("Belum ada barang.")] }],
+    sections:
+      sections.length > 0
+        ? sections
+        : [
+            {
+              properties: {
+                page: {
+                  size: {
+                    width: convertInchesToTwip(PAGE_WIDTH_IN),
+                    height: convertInchesToTwip(FULL_PAGE_HEIGHT_IN),
+                  },
+                },
+              },
+              children: [new Paragraph("Belum ada barang.")],
+            },
+          ],
   });
 
   const buffer = await Packer.toBuffer(doc);
