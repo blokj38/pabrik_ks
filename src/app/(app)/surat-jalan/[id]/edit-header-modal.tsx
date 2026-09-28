@@ -14,6 +14,7 @@ export function EditHeaderModal({
   initialDriverName,
   initialVehicle,
   initialDestinationAddress,
+  initialDepartureDate,
 }: {
   deliveryOrderId: string;
   companies: Company[];
@@ -21,6 +22,7 @@ export function EditHeaderModal({
   initialDriverName: string;
   initialVehicle: string;
   initialDestinationAddress: string;
+  initialDepartureDate: string;
 }) {
   const [open, setOpen] = useState(false);
   const boundAction = updateDeliveryOrderHeader.bind(null, deliveryOrderId);
@@ -62,6 +64,17 @@ export function EditHeaderModal({
                     </option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700">
+                  Tanggal Berangkat
+                </label>
+                <input
+                  name="departure_date"
+                  type="date"
+                  defaultValue={initialDepartureDate}
+                  className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-neutral-700">Nama Supir</label>

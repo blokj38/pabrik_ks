@@ -12,7 +12,7 @@ export default async function EditDraftDeliveryOrderPage({
 
   const { data: order } = await supabase
     .from("delivery_orders")
-    .select("id, status, customer_id, driver_name, vehicle, destination_address")
+    .select("id, status, customer_id, driver_name, vehicle, destination_address, departure_date")
     .eq("id", id)
     .single();
 
@@ -62,6 +62,7 @@ export default async function EditDraftDeliveryOrderPage({
           initialDriverName={order.driver_name ?? ""}
           initialVehicle={order.vehicle ?? ""}
           initialDestinationAddress={order.destination_address ?? ""}
+          initialDepartureDate={order.departure_date ?? ""}
           initialItems={items}
         />
       </div>

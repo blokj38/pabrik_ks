@@ -21,7 +21,7 @@ export default async function SuratJalanPage() {
 
   const { data: orders } = await supabase
     .from("delivery_orders")
-    .select("id, code, status, driver_name, created_at, companies(name)")
+    .select("id, code, status, driver_name, departure_date, created_at, companies(name)")
     .order("created_at", { ascending: false });
 
   return (
@@ -62,7 +62,7 @@ export default async function SuratJalanPage() {
                 <td className="px-4 py-3 text-neutral-600">{o.companies?.name ?? "-"}</td>
                 <td className="px-4 py-3 text-neutral-600">{o.driver_name ?? "-"}</td>
                 <td className="px-4 py-3 text-neutral-600">
-                  {new Date(o.created_at).toLocaleDateString("id-ID")}
+                  {new Date(o.departure_date ?? o.created_at).toLocaleDateString("id-ID")}
                 </td>
                 <td className="px-4 py-3">
                   <span

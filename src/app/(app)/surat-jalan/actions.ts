@@ -18,6 +18,7 @@ export async function createDeliveryOrder(
   const driverName = String(formData.get("driver_name") ?? "") || null;
   const vehicle = String(formData.get("vehicle") ?? "") || null;
   const destinationAddress = String(formData.get("destination_address") ?? "") || null;
+  const departureDate = String(formData.get("departure_date") ?? "") || null;
   const itemsRaw = String(formData.get("items") ?? "[]");
 
   let items: ItemInput[] = [];
@@ -40,6 +41,7 @@ export async function createDeliveryOrder(
       driver_name: driverName,
       vehicle,
       destination_address: destinationAddress,
+      departure_date: departureDate,
     })
     .select("id")
     .single();
@@ -88,6 +90,7 @@ export async function updateDeliveryOrderHeader(
   const driverName = String(formData.get("driver_name") ?? "") || null;
   const vehicle = String(formData.get("vehicle") ?? "") || null;
   const destinationAddress = String(formData.get("destination_address") ?? "") || null;
+  const departureDate = String(formData.get("departure_date") ?? "") || null;
 
   if (!customerId) {
     return { error: "Pelanggan wajib diisi." };
@@ -100,6 +103,7 @@ export async function updateDeliveryOrderHeader(
       driver_name: driverName,
       vehicle,
       destination_address: destinationAddress,
+      departure_date: departureDate,
     })
     .eq("id", deliveryOrderId);
 
@@ -121,6 +125,7 @@ export async function updateDraftDeliveryOrder(
   const driverName = String(formData.get("driver_name") ?? "") || null;
   const vehicle = String(formData.get("vehicle") ?? "") || null;
   const destinationAddress = String(formData.get("destination_address") ?? "") || null;
+  const departureDate = String(formData.get("departure_date") ?? "") || null;
   const itemsRaw = String(formData.get("items") ?? "[]");
 
   let items: ItemInput[] = [];
@@ -152,6 +157,7 @@ export async function updateDraftDeliveryOrder(
       driver_name: driverName,
       vehicle,
       destination_address: destinationAddress,
+      departure_date: departureDate,
     })
     .eq("id", deliveryOrderId);
 

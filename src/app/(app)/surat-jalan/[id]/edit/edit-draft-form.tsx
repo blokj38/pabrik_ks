@@ -17,6 +17,7 @@ export function EditDraftForm({
   initialDriverName,
   initialVehicle,
   initialDestinationAddress,
+  initialDepartureDate,
   initialItems,
 }: {
   deliveryOrderId: string;
@@ -26,6 +27,7 @@ export function EditDraftForm({
   initialDriverName: string;
   initialVehicle: string;
   initialDestinationAddress: string;
+  initialDepartureDate: string;
   initialItems: Row[];
 }) {
   const boundAction = updateDraftDeliveryOrder.bind(null, deliveryOrderId);
@@ -70,6 +72,15 @@ export function EditDraftForm({
               </option>
             ))}
           </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-neutral-700">Tanggal Berangkat</label>
+          <input
+            name="departure_date"
+            type="date"
+            defaultValue={initialDepartureDate}
+            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+          />
         </div>
         <div>
           <label className="block text-sm font-medium text-neutral-700">Nama Supir</label>

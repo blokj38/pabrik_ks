@@ -25,7 +25,7 @@ export default async function DeliveryOrderDetailPage({
   const { data: order } = await supabase
     .from("delivery_orders")
     .select(
-      "id, code, status, customer_id, driver_name, vehicle, destination_address, created_at, issued_at, completed_at, companies(name, address, phone)"
+      "id, code, status, customer_id, driver_name, vehicle, destination_address, departure_date, created_at, issued_at, completed_at, companies(name, address, phone)"
     )
     .eq("id", id)
     .single();
@@ -80,7 +80,7 @@ export default async function DeliveryOrderDetailPage({
   }
   const groupList = Array.from(groups.entries()).map(([key, g]) => ({ key, ...g }));
 
-  const tanggal = new Date(order.created_at).toLocaleDateString("id-ID", {
+  const tanggal = new Date(order.departure_date ?? order.created_at).toLocaleDateString("id-ID", {
     day: "numeric",
     month: "short",
     year: "2-digit",
@@ -110,6 +110,7 @@ export default async function DeliveryOrderDetailPage({
               initialDriverName={order.driver_name ?? ""}
               initialVehicle={order.vehicle ?? ""}
               initialDestinationAddress={order.destination_address ?? ""}
+              initialDepartureDate={order.departure_date ?? ""}
             />
           ) : null}
           <DeliveryOrderActions

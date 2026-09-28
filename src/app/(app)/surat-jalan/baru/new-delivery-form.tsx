@@ -20,6 +20,7 @@ export function NewDeliveryForm({
 }) {
   const [state, formAction, pending] = useActionState(createDeliveryOrder, initialState);
   const [rows, setRows] = useState<Row[]>([{ ...emptyRow }]);
+  const today = new Date().toISOString().slice(0, 10);
 
   const updateRow = (index: number, patch: Partial<Row>) => {
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
@@ -54,6 +55,15 @@ export function NewDeliveryForm({
               </option>
             ))}
           </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-neutral-700">Tanggal Berangkat</label>
+          <input
+            name="departure_date"
+            type="date"
+            defaultValue={today}
+            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+          />
         </div>
         <div>
           <label className="block text-sm font-medium text-neutral-700">Nama Supir</label>
