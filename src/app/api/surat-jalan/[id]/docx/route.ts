@@ -108,13 +108,28 @@ export async function GET(
     year: "numeric",
   });
 
+  const halfColWidth = Math.round(CONTENT_WIDTH_TWIP / 2);
+  // Nama Barang gets the most room; Satuan/Quantity/Sisa are short values
+  // that were sitting in columns with lots of wasted empty space.
+  const itemColWidths = [
+    Math.round(CONTENT_WIDTH_TWIP * 0.45),
+    Math.round(CONTENT_WIDTH_TWIP * 0.15),
+    Math.round(CONTENT_WIDTH_TWIP * 0.2),
+    Math.round(CONTENT_WIDTH_TWIP * 0.2),
+  ];
+
   function cell(
     text: string,
-    opts: { bold?: boolean; align?: (typeof AlignmentType)[keyof typeof AlignmentType] } = {}
+    opts: {
+      bold?: boolean;
+      align?: (typeof AlignmentType)[keyof typeof AlignmentType];
+      width?: number;
+    } = {}
   ) {
     return new TableCell({
       borders: cellBorder,
       verticalAlign: VerticalAlign.CENTER,
+      width: opts.width != null ? { size: opts.width, type: WidthType.DXA } : undefined,
       margins: { top: 60, bottom: 60, left: 100, right: 100 },
       children: [
         new Paragraph({
@@ -127,14 +142,15 @@ export async function GET(
 
   function buildGroupContent(group: Group): (Paragraph | Table)[] {
     const headerTable = new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
+      width: { size: CONTENT_WIDTH_TWIP, type: WidthType.DXA },
+      columnWidths: [halfColWidth, halfColWidth],
       borders: noBorder,
       rows: [
         new TableRow({
           children: [
             new TableCell({
               borders: noBorder,
-              width: { size: 50, type: WidthType.PERCENTAGE },
+              width: { size: halfColWidth, type: WidthType.DXA },
               children: [
                 new Paragraph({
                   children: [
@@ -153,7 +169,7 @@ export async function GET(
             }),
             new TableCell({
               borders: noBorder,
-              width: { size: 50, type: WidthType.PERCENTAGE },
+              width: { size: halfColWidth, type: WidthType.DXA },
               children: [
                 new Paragraph({
                   alignment: AlignmentType.RIGHT,
@@ -185,26 +201,31 @@ export async function GET(
     });
 
     const itemsTable = new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
+      width: { size: CONTENT_WIDTH_TWIP, type: WidthType.DXA },
+      columnWidths: itemColWidths,
       rows: [
         new TableRow({
           tableHeader: true,
           children: [
-            cell("Nama Barang", { bold: true }),
-            cell("Satuan", { bold: true, align: AlignmentType.CENTER }),
-            cell("Quantity", { bold: true, align: AlignmentType.RIGHT }),
-            cell("Sisa", { bold: true, align: AlignmentType.CENTER }),
+            cell("Nama Barang", { bold: true, width: itemColWidths[0] }),
+            cell("Satuan", { bold: true, align: AlignmentType.CENTER, width: itemColWidths[1] }),
+            cell("Quantity", { bold: true, align: AlignmentType.RIGHT, width: itemColWidths[2] }),
+            cell("Sisa", { bold: true, align: AlignmentType.CENTER, width: itemColWidths[3] }),
           ],
         }),
         ...group.rows.map(
           (r) =>
             new TableRow({
               children: [
-                cell(r.product_name),
-                cell(r.unit_name ?? "", { align: AlignmentType.CENTER }),
-                cell(String(r.quantity_sent), { align: AlignmentType.RIGHT }),
+                cell(r.product_name, { width: itemColWidths[0] }),
+                cell(r.unit_name ?? "", { align: AlignmentType.CENTER, width: itemColWidths[1] }),
+                cell(String(r.quantity_sent), {
+                  align: AlignmentType.RIGHT,
+                  width: itemColWidths[2],
+                }),
                 cell(r.quantity_returned ? String(r.quantity_returned) : "", {
                   align: AlignmentType.CENTER,
+                  width: itemColWidths[3],
                 }),
               ],
             })
@@ -213,7 +234,8 @@ export async function GET(
     });
 
     const footerTable = new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
+      width: { size: CONTENT_WIDTH_TWIP, type: WidthType.DXA },
+      columnWidths: [halfColWidth, halfColWidth],
       borders: noBorder,
       rows: [
         new TableRow({
@@ -221,7 +243,7 @@ export async function GET(
           children: [
             new TableCell({
               borders: noBorder,
-              width: { size: 50, type: WidthType.PERCENTAGE },
+              width: { size: halfColWidth, type: WidthType.DXA },
               children: [
                 new Paragraph({
                   children: [new TextRun({ text: "Tanda Terima", size: FONT_SIZE })],
@@ -230,7 +252,7 @@ export async function GET(
             }),
             new TableCell({
               borders: noBorder,
-              width: { size: 50, type: WidthType.PERCENTAGE },
+              width: { size: halfColWidth, type: WidthType.DXA },
               children: [
                 new Paragraph({
                   alignment: AlignmentType.RIGHT,
