@@ -17,14 +17,17 @@ import {
 import { createClient } from "@/lib/supabase/server";
 
 // Continuous 3-ply dot-matrix paper: 9.5 x 11 in per physical sheet, split
-// into two 9.5 x 5.5 in form slots. A business unit flagged half_page gets
-// a section sized to one slot; two such sections in a row land on the same
-// physical sheet without a page break between them. Everything else gets
-// a full 9.5 x 11 in sheet to itself.
+// into two form slots. The printer driver doesn't support a custom half-size
+// paper form, so every page in the job is the same 9.5x11in the driver
+// understands - the "half page" effect for a pair of half_page business
+// units is done by fixing two table row heights inside ONE full-size page
+// at exactly half the printable area each, so the second unit's content
+// always starts right at the physical perforation regardless of how much
+// content the first one has.
 const PAGE_WIDTH_IN = 9.5;
-const HALF_PAGE_HEIGHT_IN = 5.5;
-const FULL_PAGE_HEIGHT_IN = 11;
+const PAGE_HEIGHT_IN = 11;
 const PAGE_MARGIN_IN = 0.35;
+const HALF_ROW_HEIGHT_IN = PAGE_HEIGHT_IN / 2 - PAGE_MARGIN_IN;
 
 const noBorder = {
   top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
@@ -39,6 +42,15 @@ const cellBorder = {
   left: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
   right: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
 };
+
+type Row = {
+  id: string;
+  product_name: string;
+  unit_name: string | null;
+  quantity_sent: number;
+  quantity_returned: number;
+};
+type Group = { unitName: string; halfPage: boolean; rows: Row[] };
 
 export async function GET(
   _request: NextRequest,
@@ -58,6 +70,7 @@ export async function GET(
   if (!order) {
     return NextResponse.json({ error: "Surat jalan tidak ditemukan" }, { status: 404 });
   }
+  const safeOrder = order;
 
   const { data: items } = await supabase
     .from("delivery_order_items")
@@ -68,14 +81,7 @@ export async function GET(
 
   const rows = items ?? [];
 
-  type Row = {
-    id: string;
-    product_name: string;
-    unit_name: string | null;
-    quantity_sent: number;
-    quantity_returned: number;
-  };
-  const groups = new Map<string, { unitName: string; halfPage: boolean; rows: Row[] }>();
+  const groups = new Map<string, Group>();
   for (const r of rows) {
     const key = r.products?.business_unit_id ?? "lainnya";
     const unitName = r.products?.business_units?.name ?? "Lainnya";
@@ -98,7 +104,10 @@ export async function GET(
     year: "numeric",
   });
 
-  function cell(text: string, opts: { bold?: boolean; align?: (typeof AlignmentType)[keyof typeof AlignmentType] } = {}) {
+  function cell(
+    text: string,
+    opts: { bold?: boolean; align?: (typeof AlignmentType)[keyof typeof AlignmentType] } = {}
+  ) {
     return new TableCell({
       borders: cellBorder,
       verticalAlign: VerticalAlign.CENTER,
@@ -112,7 +121,7 @@ export async function GET(
     });
   }
 
-  const sections = groupList.map((group) => {
+  function buildGroupContent(group: Group): (Paragraph | Table)[] {
     const headerTable = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
       borders: noBorder,
@@ -127,7 +136,7 @@ export async function GET(
                   children: [new TextRun({ text: group.unitName, bold: true, size: 28 })],
                 }),
                 new Paragraph({
-                  children: [new TextRun({ text: `Surat Jalan No: ${order.code ?? ""}` })],
+                  children: [new TextRun({ text: `Surat Jalan No: ${safeOrder.code ?? ""}` })],
                 }),
               ],
             }),
@@ -141,13 +150,13 @@ export async function GET(
                 }),
                 new Paragraph({
                   alignment: AlignmentType.RIGHT,
-                  children: [new TextRun({ text: `Tuan   ${order.companies?.name ?? ""}` })],
+                  children: [new TextRun({ text: `Tuan   ${safeOrder.companies?.name ?? ""}` })],
                 }),
                 new Paragraph({
                   alignment: AlignmentType.RIGHT,
                   children: [
                     new TextRun({
-                      text: `Toko   ${order.destination_address || order.companies?.address || "-"}`,
+                      text: `Toko   ${safeOrder.destination_address || safeOrder.companies?.address || "-"}`,
                     }),
                   ],
                 }),
@@ -191,7 +200,7 @@ export async function GET(
       borders: noBorder,
       rows: [
         new TableRow({
-          height: { value: 1200, rule: HeightRule.ATLEAST },
+          height: { value: 800, rule: HeightRule.ATLEAST },
           children: [
             new TableCell({
               borders: noBorder,
@@ -213,51 +222,71 @@ export async function GET(
       ],
     });
 
-    const pageHeightIn = group.halfPage ? HALF_PAGE_HEIGHT_IN : FULL_PAGE_HEIGHT_IN;
+    return [headerTable, new Paragraph({ text: "" }), itemsTable, new Paragraph({ text: "" }), footerTable];
+  }
 
-    return {
-      properties: {
-        type: "nextPage" as const,
-        page: {
-          size: {
-            width: convertInchesToTwip(PAGE_WIDTH_IN),
-            height: convertInchesToTwip(pageHeightIn),
-          },
-          margin: {
-            top: convertInchesToTwip(PAGE_MARGIN_IN),
-            bottom: convertInchesToTwip(PAGE_MARGIN_IN),
-            left: convertInchesToTwip(PAGE_MARGIN_IN),
-            right: convertInchesToTwip(PAGE_MARGIN_IN),
-          },
-        },
+  // Chunk groups into physical pages: two consecutive half_page groups
+  // share one page (each pinned to exactly half its printable height);
+  // anything else gets a page to itself.
+  const pages: Group[][] = [];
+  for (let i = 0; i < groupList.length; ) {
+    const g = groupList[i];
+    const next = groupList[i + 1];
+    if (g.halfPage && next?.halfPage) {
+      pages.push([g, next]);
+      i += 2;
+    } else {
+      pages.push([g]);
+      i += 1;
+    }
+  }
+
+  const pageProperties = {
+    type: "nextPage" as const,
+    page: {
+      size: {
+        width: convertInchesToTwip(PAGE_WIDTH_IN),
+        height: convertInchesToTwip(PAGE_HEIGHT_IN),
       },
-      children: [
-        headerTable,
-        new Paragraph({ text: "" }),
-        itemsTable,
-        new Paragraph({ text: "" }),
-        footerTable,
-      ],
-    };
+      margin: {
+        top: convertInchesToTwip(PAGE_MARGIN_IN),
+        bottom: convertInchesToTwip(PAGE_MARGIN_IN),
+        left: convertInchesToTwip(PAGE_MARGIN_IN),
+        right: convertInchesToTwip(PAGE_MARGIN_IN),
+      },
+    },
+  };
+
+  const sections = pages.map((pageGroups) => {
+    if (pageGroups.length === 2) {
+      const splitTable = new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: noBorder,
+        rows: pageGroups.map(
+          (g) =>
+            new TableRow({
+              height: { value: convertInchesToTwip(HALF_ROW_HEIGHT_IN), rule: HeightRule.EXACT },
+              children: [
+                new TableCell({
+                  borders: noBorder,
+                  children: buildGroupContent(g),
+                }),
+              ],
+            })
+        ),
+      });
+
+      return { properties: pageProperties, children: [splitTable] };
+    }
+
+    return { properties: pageProperties, children: buildGroupContent(pageGroups[0]) };
   });
 
   const doc = new Document({
     sections:
       sections.length > 0
         ? sections
-        : [
-            {
-              properties: {
-                page: {
-                  size: {
-                    width: convertInchesToTwip(PAGE_WIDTH_IN),
-                    height: convertInchesToTwip(FULL_PAGE_HEIGHT_IN),
-                  },
-                },
-              },
-              children: [new Paragraph("Belum ada barang.")],
-            },
-          ],
+        : [{ properties: pageProperties, children: [new Paragraph("Belum ada barang.")] }],
   });
 
   const buffer = await Packer.toBuffer(doc);
