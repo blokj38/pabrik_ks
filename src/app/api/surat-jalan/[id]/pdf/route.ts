@@ -31,20 +31,27 @@ type OrderInfo = {
 
 type Column = { width: number; align: "left" | "center" | "right"; label: string };
 
+// "Cetak Cepat" mode: Helvetica plus stroked cell borders makes Adobe/Foxit
+// send the whole page to the LX-300 II as a raster image, which is much
+// slower than native text. Courier is a built-in pdfkit font (no extra file
+// reads) that Windows driver substitution recognizes as plain text, and
+// skipping the border strokes removes the one graphics element left.
 function drawTableRow(
   doc: PDFKit.PDFDocument,
   x: number,
   y: number,
   columns: Column[],
   values: string[],
-  bold: boolean
+  bold: boolean,
+  cepat: boolean
 ) {
   const rowHeight = FONT_SIZE + 8;
-  doc.font(bold ? "Helvetica-Bold" : "Helvetica").fontSize(FONT_SIZE);
+  const base = cepat ? "Courier" : "Helvetica";
+  doc.font(bold ? `${base}-Bold` : base).fontSize(FONT_SIZE);
   let curX = x;
   for (let i = 0; i < columns.length; i++) {
     const col = columns[i];
-    doc.rect(curX, y, col.width, rowHeight).stroke();
+    if (!cepat) doc.rect(curX, y, col.width, rowHeight).stroke();
     doc.text(values[i] ?? "", curX + 4, y + 4, {
       width: col.width - 8,
       align: col.align,
@@ -60,20 +67,22 @@ function drawGroupBlock(
   group: Group,
   order: OrderInfo,
   tanggal: string,
-  startY: number
+  startY: number,
+  cepat: boolean
 ) {
   const leftX = MARGIN_PT;
   const contentWidth = PAGE_WIDTH_PT - 2 * MARGIN_PT;
   const halfWidth = contentWidth / 2;
   const rightX = leftX + halfWidth;
+  const base = cepat ? "Courier" : "Helvetica";
 
   let y = startY;
 
-  doc.font("Helvetica-Bold").fontSize(HEADING_SIZE);
+  doc.font(`${base}-Bold`).fontSize(HEADING_SIZE);
   const headingHeight = doc.heightOfString(group.unitName, { width: halfWidth });
   doc.text(group.unitName, leftX, y, { width: halfWidth });
 
-  doc.font("Helvetica").fontSize(FONT_SIZE);
+  doc.font(base).fontSize(FONT_SIZE);
   doc.text(`Tanggal   ${tanggal}`, rightX, y, { width: halfWidth, align: "right" });
 
   y += headingHeight + 2;
@@ -99,7 +108,8 @@ function drawGroupBlock(
     y,
     columns,
     columns.map((c) => c.label),
-    true
+    true,
+    cepat
   );
   for (const r of group.rows) {
     y = drawTableRow(
@@ -113,12 +123,13 @@ function drawGroupBlock(
         String(r.quantity_sent),
         r.quantity_returned ? String(r.quantity_returned) : "",
       ],
-      false
+      false,
+      cepat
     );
   }
 
   y += 24;
-  doc.font("Helvetica").fontSize(FONT_SIZE);
+  doc.font(base).fontSize(FONT_SIZE);
   doc.text("Tanda Terima", leftX, y);
   doc.text("Hormat Kami,", rightX, y, { width: halfWidth, align: "right" });
 
@@ -126,10 +137,11 @@ function drawGroupBlock(
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const cepat = request.nextUrl.searchParams.get("cepat") === "1";
   const supabase = await createClient();
 
   const { data: order } = await supabase
@@ -215,7 +227,10 @@ export async function GET(
 
   if (pages.length === 0) {
     doc.addPage({ size: [PAGE_WIDTH_PT, PAGE_HEIGHT_PT], margin: MARGIN_PT });
-    doc.font("Helvetica").fontSize(FONT_SIZE).text("Belum ada barang.", MARGIN_PT, MARGIN_PT);
+    doc
+      .font(cepat ? "Courier" : "Helvetica")
+      .fontSize(FONT_SIZE)
+      .text("Belum ada barang.", MARGIN_PT, MARGIN_PT);
   } else {
     pages.forEach((pageGroups, idx) => {
       if (idx > 0) {
@@ -223,10 +238,10 @@ export async function GET(
         doc.lineWidth(0.5);
       }
       if (pageGroups.length === 2) {
-        drawGroupBlock(doc, pageGroups[0], orderInfo, tanggal, MARGIN_PT);
-        drawGroupBlock(doc, pageGroups[1], orderInfo, tanggal, HALF_PAGE_PT + MARGIN_PT);
+        drawGroupBlock(doc, pageGroups[0], orderInfo, tanggal, MARGIN_PT, cepat);
+        drawGroupBlock(doc, pageGroups[1], orderInfo, tanggal, HALF_PAGE_PT + MARGIN_PT, cepat);
       } else {
-        drawGroupBlock(doc, pageGroups[0], orderInfo, tanggal, MARGIN_PT);
+        drawGroupBlock(doc, pageGroups[0], orderInfo, tanggal, MARGIN_PT, cepat);
       }
     });
   }
@@ -237,7 +252,7 @@ export async function GET(
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="${order.code ?? "surat-jalan"}.pdf"`,
+      "Content-Disposition": `inline; filename="${order.code ?? "surat-jalan"}${cepat ? "-cepat" : ""}.pdf"`,
     },
   });
 }

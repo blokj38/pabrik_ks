@@ -33,6 +33,12 @@ const CONTENT_WIDTH_TWIP = convertInchesToTwip(PAGE_WIDTH_IN - 2 * PAGE_MARGIN_I
 const FONT_SIZE = 28;
 const HEADING_FONT_SIZE = 32;
 const FONT_NAME = "Arial";
+// "Cetak Cepat" mode: Arial + table borders force the Windows driver to
+// print the whole page as a raster image on the LX-300 II, which is
+// dramatically slower than native text. Courier New is on the driver's
+// TrueType-substitution table and, combined with no border graphics, lets
+// it print as plain text at full draft speed.
+const FAST_FONT_NAME = "Courier New";
 
 const noBorder = {
   top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
@@ -59,10 +65,13 @@ type Row = {
 type Group = { unitName: string; halfPage: boolean; sortOrder: number; rows: Row[] };
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const cepat = request.nextUrl.searchParams.get("cepat") === "1";
+  const fontName = cepat ? FAST_FONT_NAME : FONT_NAME;
+  const activeCellBorder = cepat ? noBorder : cellBorder;
   const supabase = await createClient();
 
   const { data: order } = await supabase
@@ -130,14 +139,14 @@ export async function GET(
     } = {}
   ) {
     return new TableCell({
-      borders: cellBorder,
+      borders: activeCellBorder,
       verticalAlign: VerticalAlign.CENTER,
       width: opts.width != null ? { size: opts.width, type: WidthType.DXA } : undefined,
       margins: { top: 60, bottom: 60, left: 100, right: 100 },
       children: [
         new Paragraph({
           alignment: opts.align,
-          children: [new TextRun({ text, bold: opts.bold, size: FONT_SIZE, font: FONT_NAME })],
+          children: [new TextRun({ text, bold: opts.bold, size: FONT_SIZE, font: fontName })],
         }),
       ],
     });
@@ -161,7 +170,7 @@ export async function GET(
                       text: group.unitName,
                       bold: true,
                       size: HEADING_FONT_SIZE,
-                      font: FONT_NAME,
+                      font: fontName,
                     }),
                   ],
                 }),
@@ -170,7 +179,7 @@ export async function GET(
                     new TextRun({
                       text: `Surat Jalan No: ${safeOrder.code ?? ""}`,
                       size: FONT_SIZE,
-                      font: FONT_NAME,
+                      font: fontName,
                     }),
                   ],
                 }),
@@ -183,7 +192,7 @@ export async function GET(
                 new Paragraph({
                   alignment: AlignmentType.RIGHT,
                   children: [
-                    new TextRun({ text: `Tanggal   ${tanggal}`, size: FONT_SIZE, font: FONT_NAME }),
+                    new TextRun({ text: `Tanggal   ${tanggal}`, size: FONT_SIZE, font: fontName }),
                   ],
                 }),
                 new Paragraph({
@@ -192,7 +201,7 @@ export async function GET(
                     new TextRun({
                       text: `Tuan   ${safeOrder.companies?.name ?? ""}`,
                       size: FONT_SIZE,
-                      font: FONT_NAME,
+                      font: fontName,
                     }),
                   ],
                 }),
@@ -202,7 +211,7 @@ export async function GET(
                     new TextRun({
                       text: `Toko   ${safeOrder.destination_address || safeOrder.companies?.address || "-"}`,
                       size: FONT_SIZE,
-                      font: FONT_NAME,
+                      font: fontName,
                     }),
                   ],
                 }),
@@ -260,7 +269,7 @@ export async function GET(
               children: [
                 new Paragraph({
                   children: [
-                    new TextRun({ text: "Tanda Terima", size: FONT_SIZE, font: FONT_NAME }),
+                    new TextRun({ text: "Tanda Terima", size: FONT_SIZE, font: fontName }),
                   ],
                 }),
               ],
@@ -272,7 +281,7 @@ export async function GET(
                 new Paragraph({
                   alignment: AlignmentType.RIGHT,
                   children: [
-                    new TextRun({ text: "Hormat Kami,", size: FONT_SIZE, font: FONT_NAME }),
+                    new TextRun({ text: "Hormat Kami,", size: FONT_SIZE, font: fontName }),
                   ],
                 }),
               ],
@@ -348,7 +357,7 @@ export async function GET(
     styles: {
       default: {
         document: {
-          run: { font: FONT_NAME },
+          run: { font: fontName },
         },
       },
     },
@@ -363,7 +372,7 @@ export async function GET(
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "Content-Disposition": `attachment; filename="${order.code ?? "surat-jalan"}.docx"`,
+      "Content-Disposition": `attachment; filename="${order.code ?? "surat-jalan"}${cepat ? "-cepat" : ""}.docx"`,
     },
   });
 }

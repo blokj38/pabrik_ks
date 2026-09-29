@@ -81,6 +81,22 @@ export function PrintDocuments({
             >
               Download PDF
             </a>
+            <a
+              href={`/api/surat-jalan/${deliveryOrderId}/docx?cepat=1`}
+              title="Tanpa garis tabel, font Courier - untuk cetak lebih cepat di printer dot-matrix"
+              className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
+            >
+              Word (Cepat)
+            </a>
+            <a
+              href={`/api/surat-jalan/${deliveryOrderId}/pdf?cepat=1`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Tanpa garis tabel, font Courier - untuk cetak lebih cepat di printer dot-matrix"
+              className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
+            >
+              PDF (Cepat)
+            </a>
           </div>
         </div>
       ) : (
@@ -105,6 +121,22 @@ export function PrintDocuments({
             className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
           >
             Download PDF
+          </a>
+          <a
+            href={`/api/surat-jalan/${deliveryOrderId}/docx?cepat=1`}
+            title="Tanpa garis tabel, font Courier - untuk cetak lebih cepat di printer dot-matrix"
+            className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
+          >
+            Word (Cepat)
+          </a>
+          <a
+            href={`/api/surat-jalan/${deliveryOrderId}/pdf?cepat=1`}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Tanpa garis tabel, font Courier - untuk cetak lebih cepat di printer dot-matrix"
+            className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
+          >
+            PDF (Cepat)
           </a>
         </div>
       )}
