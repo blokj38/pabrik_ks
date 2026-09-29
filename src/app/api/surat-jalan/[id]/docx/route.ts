@@ -56,7 +56,7 @@ type Row = {
   quantity_sent: number;
   quantity_returned: number;
 };
-type Group = { unitName: string; halfPage: boolean; rows: Row[] };
+type Group = { unitName: string; halfPage: boolean; sortOrder: number; rows: Row[] };
 
 export async function GET(
   _request: NextRequest,
@@ -81,7 +81,7 @@ export async function GET(
   const { data: items } = await supabase
     .from("delivery_order_items")
     .select(
-      "id, quantity_sent, quantity_returned, products(name, units(name), business_unit_id, business_units(name, half_page))"
+      "id, quantity_sent, quantity_returned, products(name, units(name), business_unit_id, business_units(name, half_page, sort_order))"
     )
     .eq("delivery_order_id", id);
 
@@ -92,7 +92,8 @@ export async function GET(
     const key = r.products?.business_unit_id ?? "lainnya";
     const unitName = r.products?.business_units?.name ?? "Lainnya";
     const halfPage = r.products?.business_units?.half_page ?? false;
-    const group = groups.get(key) ?? { unitName, halfPage, rows: [] };
+    const sortOrder = r.products?.business_units?.sort_order ?? 0;
+    const group = groups.get(key) ?? { unitName, halfPage, sortOrder, rows: [] };
     group.rows.push({
       id: r.id,
       product_name: r.products?.name ?? "-",
@@ -102,7 +103,7 @@ export async function GET(
     });
     groups.set(key, group);
   }
-  const groupList = Array.from(groups.values());
+  const groupList = Array.from(groups.values()).sort((a, b) => a.sortOrder - b.sortOrder);
 
   const tanggal = new Date(order.departure_date ?? order.created_at).toLocaleDateString("id-ID", {
     day: "numeric",

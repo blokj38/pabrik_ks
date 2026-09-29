@@ -36,7 +36,7 @@ export default async function DeliveryOrderDetailPage({
     supabase
       .from("delivery_order_items")
       .select(
-        "id, product_id, quantity_sent, quantity_returned, unit_price, products(name, units(name), business_unit_id, business_units(name))"
+        "id, product_id, quantity_sent, quantity_returned, unit_price, products(name, units(name), business_unit_id, business_units(name, sort_order))"
       )
       .eq("delivery_order_id", id),
     supabase.from("companies").select("id, name").order("name"),
@@ -64,11 +64,12 @@ export default async function DeliveryOrderDetailPage({
     quantity_sent: number;
     quantity_returned: number;
   };
-  const groups = new Map<string, { unitName: string; rows: PrintRow[] }>();
+  const groups = new Map<string, { unitName: string; sortOrder: number; rows: PrintRow[] }>();
   for (const r of rows) {
     const key = r.products?.business_unit_id ?? "lainnya";
     const unitName = r.products?.business_units?.name ?? "Lainnya";
-    const group = groups.get(key) ?? { unitName, rows: [] };
+    const sortOrder = r.products?.business_units?.sort_order ?? 0;
+    const group = groups.get(key) ?? { unitName, sortOrder, rows: [] };
     group.rows.push({
       id: r.id,
       product_name: r.products?.name ?? "-",
@@ -78,7 +79,9 @@ export default async function DeliveryOrderDetailPage({
     });
     groups.set(key, group);
   }
-  const groupList = Array.from(groups.entries()).map(([key, g]) => ({ key, ...g }));
+  const groupList = Array.from(groups.entries())
+    .map(([key, g]) => ({ key, ...g }))
+    .sort((a, b) => a.sortOrder - b.sortOrder);
 
   const tanggal = new Date(order.departure_date ?? order.created_at).toLocaleDateString("id-ID", {
     day: "numeric",

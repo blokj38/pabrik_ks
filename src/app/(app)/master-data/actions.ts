@@ -225,6 +225,17 @@ export async function setBusinessUnitHalfPage(id: string, halfPage: boolean) {
   return { error: error?.message ?? null };
 }
 
+export async function setBusinessUnitSortOrder(id: string, sortOrder: number) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("business_units")
+    .update({ sort_order: sortOrder })
+    .eq("id", id);
+  revalidatePath("/master-data");
+  revalidatePath("/surat-jalan");
+  return { error: error?.message ?? null };
+}
+
 export async function deleteBusinessUnit(id: string): Promise<DeleteState> {
   const supabase = await createClient();
   const { error } = await supabase.from("business_units").delete().eq("id", id);

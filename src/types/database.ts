@@ -314,6 +314,7 @@ export type Database = {
           half_page: boolean
           id: string
           name: string
+          sort_order: number
         }
         Insert: {
           address?: string | null
@@ -321,6 +322,7 @@ export type Database = {
           half_page?: boolean
           id?: string
           name: string
+          sort_order?: number
         }
         Update: {
           address?: string | null
@@ -328,6 +330,7 @@ export type Database = {
           half_page?: boolean
           id?: string
           name?: string
+          sort_order?: number
         }
         Relationships: []
       }
