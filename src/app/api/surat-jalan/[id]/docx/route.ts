@@ -32,6 +32,7 @@ const CONTENT_WIDTH_TWIP = convertInchesToTwip(PAGE_WIDTH_IN - 2 * PAGE_MARGIN_I
 // TextRun size is in half-points, so 28 = 14pt.
 const FONT_SIZE = 28;
 const HEADING_FONT_SIZE = 32;
+const FONT_NAME = "Arial";
 
 const noBorder = {
   top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
@@ -40,11 +41,12 @@ const noBorder = {
   right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
 };
 
+// Border size is in eighths of a point, so 2 = 0.25pt (a thin hairline).
 const cellBorder = {
-  top: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
-  bottom: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
-  left: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
-  right: { style: BorderStyle.SINGLE, size: 4, color: "000000" },
+  top: { style: BorderStyle.SINGLE, size: 2, color: "000000" },
+  bottom: { style: BorderStyle.SINGLE, size: 2, color: "000000" },
+  left: { style: BorderStyle.SINGLE, size: 2, color: "000000" },
+  right: { style: BorderStyle.SINGLE, size: 2, color: "000000" },
 };
 
 type Row = {
@@ -134,7 +136,7 @@ export async function GET(
       children: [
         new Paragraph({
           alignment: opts.align,
-          children: [new TextRun({ text, bold: opts.bold, size: FONT_SIZE })],
+          children: [new TextRun({ text, bold: opts.bold, size: FONT_SIZE, font: FONT_NAME })],
         }),
       ],
     });
@@ -154,7 +156,12 @@ export async function GET(
               children: [
                 new Paragraph({
                   children: [
-                    new TextRun({ text: group.unitName, bold: true, size: HEADING_FONT_SIZE }),
+                    new TextRun({
+                      text: group.unitName,
+                      bold: true,
+                      size: HEADING_FONT_SIZE,
+                      font: FONT_NAME,
+                    }),
                   ],
                 }),
                 new Paragraph({
@@ -162,6 +169,7 @@ export async function GET(
                     new TextRun({
                       text: `Surat Jalan No: ${safeOrder.code ?? ""}`,
                       size: FONT_SIZE,
+                      font: FONT_NAME,
                     }),
                   ],
                 }),
@@ -173,7 +181,9 @@ export async function GET(
               children: [
                 new Paragraph({
                   alignment: AlignmentType.RIGHT,
-                  children: [new TextRun({ text: `Tanggal   ${tanggal}`, size: FONT_SIZE })],
+                  children: [
+                    new TextRun({ text: `Tanggal   ${tanggal}`, size: FONT_SIZE, font: FONT_NAME }),
+                  ],
                 }),
                 new Paragraph({
                   alignment: AlignmentType.RIGHT,
@@ -181,6 +191,7 @@ export async function GET(
                     new TextRun({
                       text: `Tuan   ${safeOrder.companies?.name ?? ""}`,
                       size: FONT_SIZE,
+                      font: FONT_NAME,
                     }),
                   ],
                 }),
@@ -190,6 +201,7 @@ export async function GET(
                     new TextRun({
                       text: `Toko   ${safeOrder.destination_address || safeOrder.companies?.address || "-"}`,
                       size: FONT_SIZE,
+                      font: FONT_NAME,
                     }),
                   ],
                 }),
@@ -246,7 +258,9 @@ export async function GET(
               width: { size: halfColWidth, type: WidthType.DXA },
               children: [
                 new Paragraph({
-                  children: [new TextRun({ text: "Tanda Terima", size: FONT_SIZE })],
+                  children: [
+                    new TextRun({ text: "Tanda Terima", size: FONT_SIZE, font: FONT_NAME }),
+                  ],
                 }),
               ],
             }),
@@ -256,7 +270,9 @@ export async function GET(
               children: [
                 new Paragraph({
                   alignment: AlignmentType.RIGHT,
-                  children: [new TextRun({ text: "Hormat Kami,", size: FONT_SIZE })],
+                  children: [
+                    new TextRun({ text: "Hormat Kami,", size: FONT_SIZE, font: FONT_NAME }),
+                  ],
                 }),
               ],
             }),
@@ -328,6 +344,13 @@ export async function GET(
   });
 
   const doc = new Document({
+    styles: {
+      default: {
+        document: {
+          run: { font: FONT_NAME },
+        },
+      },
+    },
     sections:
       sections.length > 0
         ? sections

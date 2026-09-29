@@ -203,6 +203,8 @@ export async function GET(
     margins: { top: MARGIN_PT, bottom: MARGIN_PT, left: MARGIN_PT, right: MARGIN_PT },
     autoFirstPage: pages.length > 0,
   });
+  // Default line width is 1pt; thin it to a hairline for the table grid.
+  doc.lineWidth(0.5);
 
   const chunks: Buffer[] = [];
   doc.on("data", (chunk: Buffer) => chunks.push(chunk));
@@ -217,6 +219,7 @@ export async function GET(
     pages.forEach((pageGroups, idx) => {
       if (idx > 0) {
         doc.addPage({ size: [PAGE_WIDTH_PT, PAGE_HEIGHT_PT], margin: MARGIN_PT });
+        doc.lineWidth(0.5);
       }
       if (pageGroups.length === 2) {
         drawGroupBlock(doc, pageGroups[0], orderInfo, tanggal, MARGIN_PT);
